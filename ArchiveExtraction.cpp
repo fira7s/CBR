@@ -14,7 +14,9 @@
 #include <vector>
 #include <map>
 #include<filesystem>
-
+#include <iostream>
+#include <map>
+#include <algorithm>
 
 
 ArchiveExtraction::~ArchiveExtraction()
@@ -80,51 +82,49 @@ static int CopierDonnees(struct archive* ar, struct archive* aw)
     }
 }
 
-void ArchiveExtraction::LireArchive(std::string PathArchive)
-{//Lire le contenu d'un fichier et remplir la liste des fichiers
+void ArchiveExtraction::LireArchive()
+{
+    const char* CheminFichier = CheminArchive.c_str();
 
-    ListeFichier.clear();
-    const char* CheminFichier = PathArchive.c_str();
-
+    std::vector<std::string> filenames;
     struct archive* a;
-    struct archive_entry* entry;//structure permet d'index chaque document dans archive
+    struct archive_entry* entry;
 
     int r;
     int counteurNmbrPages = 0;
 
-    a = archive_read_new();//initialise a pour la lecture
-    archive_read_support_filter_all(a);//pour pouvoir lire tous les formats
+    a = archive_read_new();
+    archive_read_support_filter_all(a);
     archive_read_support_format_all(a);
 
-    if (CheminFichier != NULL && strcmp(CheminFichier, "-") == 0) //CheminFichier n'est pas null
+    if (CheminFichier != NULL && strcmp(CheminFichier, "-") == 0)
         CheminFichier = NULL;
-    if ((r = archive_read_open_filename(a, CheminFichier, 10240)))// si on a bien ouvrir le file ou pas
-          Echouer("archive_read_open_filename()", archive_error_string(a), r);
-    for (;;) {
-        r = archive_read_next_header(a, &entry);//lire chaque document dans l'archive
+    if ((r = archive_read_open_filename(a, CheminFichier, 10240)))
+        Echouer("archive_read_open_filename()", archive_error_string(a), r);
 
-        if (r == ARCHIVE_EOF)//archive end of file
-            break;
-        if (r != ARCHIVE_OK)
-            Echouer("archive_read_next_header()", archive_error_string(a), 1);
-
-        std::string NomFichier=(std::string)archive_entry_pathname(entry);
+    while (archive_read_next_header(a, &entry) == ARCHIVE_OK) {
+        std::string NomFichier = archive_entry_pathname(entry);
         size_t PositionType = NomFichier.rfind(".");
+        std::string TypeFichier(NomFichier.begin() + PositionType + 1, NomFichier.end());
+        transform(TypeFichier.begin(), TypeFichier.end(), TypeFichier.begin(), ::tolower);
 
-        std::string TypeFichier(NomFichier.begin() + PositionType + 1, NomFichier.end()); // pour avoir type de fichieer cbr ou cbz
-        transform(TypeFichier.begin(), TypeFichier.end(), TypeFichier.begin(), ::tolower); //transforme chaine type en miniscule
-        if (TypeFichier == "png" || TypeFichier == "jpg" || TypeFichier == "bmp")
-        {
-            //Ajouter Fichier dans map
-            ListeFichier.insert(std::pair<int, std::string>(counteurNmbrPages, NomFichier));
-            counteurNmbrPages += 1;
+        if (TypeFichier == "png" || TypeFichier == "jpg" || TypeFichier == "bmp") {
+            filenames.push_back(NomFichier);
+            counteurNmbrPages++;
         }
-
     }
+
     SetNombreTotalPages(counteurNmbrPages);
+
+    std::sort(filenames.begin(), filenames.end());
+
+    ListeFichier.clear();
+    for (int i = 0; i < filenames.size(); i++) {
+        ListeFichier.insert(std::pair<int, std::string>(i, filenames[i]));
+    }
+
     archive_read_close(a);
     archive_read_free(a);
-
 }
 
 
@@ -227,7 +227,7 @@ void ArchiveExtraction::Extract(const char* filename, int DoExtract, int flags, 
 
 cv::Mat ArchiveExtraction::ChargerImage(int numeroPage)
 {//Charger une image d'un fichier
-
+    LireArchive();
     std::string PathFile;
     PathFile = std::filesystem::current_path().string();
     char lettre1 = '\\';

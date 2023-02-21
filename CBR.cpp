@@ -44,22 +44,34 @@ CBR::~CBR()
 
 void CBR::extractArchive()
 {
-    /*ArchiveExtraction a;
-    a.LireArchive("data/ex2.cbr");
-    a.DecompresserArchive(0, "data/ex2.cbr");
+    /*ArchiveExtraction a("data/ex3.zip");
+    a.LireArchive();
+    a.DecompresserArchive(0, "data/ex3.zip");
     QGraphicsScene* scene = new QGraphicsScene(this);
     ui.graphicsView->setScene(scene);
+
+    // Print number of pages
     QGraphicsTextItem* textItem = new QGraphicsTextItem(QString::number(a.GetNombreTotalePage()));
     textItem->setPos(50, 50);
-    scene->addItem(textItem);*/
+    scene->addItem(textItem);
+
+    // Print filenames
+    int y = 80; // Starting y position for filenames
+    std::map<int, std::string> fileMap = a.GetListeFichier();
+    for (auto const& file : fileMap)
+    {
+        QGraphicsTextItem* filenameItem = new QGraphicsTextItem(QString::fromStdString(file.second));
+        filenameItem->setPos(50, y);
+        scene->addItem(filenameItem);
+        y += 20; // Increase y position for next filename
+    }*/
     v.set_current_archvie("data/ex3.zip");
     v.set_page_number(0);
     QGraphicsScene* scene = new QGraphicsScene(this);
     ui.graphicsView->setScene(scene);
     ArchiveExtraction a("data/ex3.zip");
-    a.LireArchive("data/ex3.zip");
     cv::Mat image;
-    image = a.ChargerImage(0);
+    image = a.ChargerImage(8);
     QImage qimage(image.data,image.cols,image.rows,image.step,QImage::Format_BGR888);
     QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
     scene->addItem(pixmapItem);
@@ -76,7 +88,7 @@ void CBR::extractArchive()
 void CBR::sommaire()
 {
     ArchiveExtraction a("data/ex3.zip"); //get current archive from v
-    a.LireArchive("data/ex3.zip");
+    a.LireArchive();
     std::map<int, std::string> m_fileNames = a.GetListeFichier();
     std::string m_currentFile = "46_008";
     QDialog dialog(this);
@@ -102,7 +114,7 @@ void CBR::PageSuivante()
     ui.graphicsView->setScene(scene);
     ArchiveExtraction a(v.get_current_archvie());
     v.set_page_number(v.get_page_Number() + 1);
-    a.LireArchive(v.get_current_archvie());
+    a.LireArchive();
     cv::Mat image;
     image = a.ChargerImage(v.get_page_Number());
     QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
@@ -131,7 +143,7 @@ void CBR::PagePrecedante()
     ui.graphicsView->setScene(scene);
     ArchiveExtraction a(v.get_current_archvie());
     v.set_page_number(v.get_page_Number() - 1);
-    a.LireArchive(v.get_current_archvie());
+    a.LireArchive();
     cv::Mat image;
     image = a.ChargerImage(v.get_page_Number());
     QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);

@@ -16,7 +16,7 @@ public:
     int GetNombreTotalePage();
     std::map <int, std::string> GetListeFichier();
     virtual cv::Mat ChargerImage(int numeroPage) = 0;
-    virtual void LireArchive(std::string path) = 0;
+    virtual void LireArchive() = 0;
     virtual bool DecompresserArchive(int numPage, std::string ArchivePathName1) = 0;
 
 };

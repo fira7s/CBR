@@ -5,7 +5,7 @@ Cette repo a été créé dans le but d'héberger notre projet de l'IN204 au sei
 fix archive extraction
 fix sommaire
 Implémenter un cache pour les images en utilisant le multi-threading et l'asynchronisme pour une amélioration de la performance.
-Major code cleanup.
+Major code cleanup+exception handling.
 Ajouter un slider en bas pour indiquer la progression de la lecture.
 Modifier le thème en ajoutant un mode sombre et en intégrant des boutons d'icônes pour une meilleure expérience utilisateur.
 2 pages integration
