@@ -55,33 +55,33 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <ExecutablePath>C:\Users\firas\Desktop\libarchive\bin;$(ExecutablePath)</ExecutablePath>
-    <IncludePath>C:\Users\firas\Desktop\libarchive\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\firas\Desktop\libarchive\lib;$(LibraryPath)</LibraryPath>
+    <ExecutablePath>C:\Users\firas\Desktop\libarchive\bin;C:\Users\firas\Downloads\opencv\build\x64\vc16\bin;$(ExecutablePath)</ExecutablePath>
+    <IncludePath>C:\Users\firas\Desktop\libarchive\include;C:\Users\firas\Downloads\opencv\build\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\firas\Desktop\libarchive\lib;C:\Users\firas\Downloads\opencv\build\x64\vc16\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <ExecutablePath>C:\Users\firas\Desktop\libarchive\bin;$(ExecutablePath)</ExecutablePath>
-    <IncludePath>C:\Users\firas\Desktop\libarchive\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\firas\Desktop\libarchive\lib;$(LibraryPath)</LibraryPath>
+    <ExecutablePath>C:\Users\firas\Desktop\libarchive\bin;C:\Users\firas\Downloads\opencv\build\x64\vc16\bin;$(ExecutablePath)</ExecutablePath>
+    <IncludePath>C:\Users\firas\Desktop\libarchive\include;C:\Users\firas\Downloads\opencv\build\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\firas\Desktop\libarchive\lib;C:\Users\firas\Downloads\opencv\build\x64\vc16\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\firas\Desktop\libarchive\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\firas\Desktop\libarchive\include;C:\Users\firas\Downloads\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>C:\Users\firas\Desktop\libarchive\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>archive.lib;archive_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>archive.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <AdditionalLibraryDirectories>C:\Users\firas\Desktop\libarchive\lib;C:\Users\firas\Downloads\opencv\build\x64\vc16\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>archive.lib;archive_static.lib;opencv_world470d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>archive.dll;opencv_world470d.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\firas\Desktop\libarchive\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\firas\Desktop\libarchive\include;C:\Users\firas\Downloads\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>C:\Users\firas\Desktop\libarchive\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>archive.lib;archive_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>archive.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <AdditionalLibraryDirectories>C:\Users\firas\Desktop\libarchive\lib;C:\Users\firas\Downloads\opencv\build\x64\vc16\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>archive.lib;archive_static.lib;opencv_world470.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>archive.dll;opencv_world470.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
@@ -115,11 +115,13 @@
     <ClCompile Include="ArchiveExtraction.cpp" />
     <ClCompile Include="archives.cpp" />
     <ClCompile Include="CBR.cpp" />
+    <ClCompile Include="currentView.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArchiveExtraction.h" />
     <ClInclude Include="archives.h" />
+    <ClInclude Include="currentView.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

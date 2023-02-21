@@ -3,6 +3,19 @@
 #include <archive_entry.h>
 #include <archive.h>
 #include <string.h>
+#include <opencv2/opencv.hpp>
+#include <iostream>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <vector>
+#include <map>
+#include<filesystem>
+
+
 
 ArchiveExtraction::~ArchiveExtraction()
 {}
@@ -212,3 +225,20 @@ void ArchiveExtraction::Extract(const char* filename, int DoExtract, int flags, 
 }
 
 
+cv::Mat ArchiveExtraction::ChargerImage(int numeroPage)
+{//Charger une image d'un fichier
+
+    std::string PathFile;
+    PathFile = std::filesystem::current_path().string();
+    char lettre1 = '\\';
+    char lettre2 = '/';
+    char* chaine = (char*)PathFile.c_str();
+    for (size_t i = 0; i < strlen(chaine); i++)
+    {
+        if (chaine[i] == lettre1) PathFile[i] = lettre2;
+    }
+    PathFile = PathFile + "/" + ListeFichier[numeroPage];
+    DecompresserArchive(numeroPage, CheminArchive);
+    cv::Mat temp_image = cv::imread(PathFile, cv::IMREAD_COLOR); //Charge une image à partir d'un fichier
+    return temp_image;
+}
