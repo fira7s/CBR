@@ -16,7 +16,8 @@
 #include <QMenu>
 #include <QAction>
 #include <QDirIterator>
-
+#include <QDialog>
+#include <QPushButton>
 
 
 
@@ -28,6 +29,7 @@ CBR::CBR(QWidget *parent)
     connect(ui.suivantButton, &QPushButton::clicked, this, &CBR::PageSuivante);
     connect(ui.precedantButton, &QPushButton::clicked, this, &CBR::PagePrecedante);
     connect(ui.createButton, &QPushButton::clicked, this, &CBR::createArchive);
+    connect(ui.SommaireButton, &QPushButton::clicked, this, &CBR::sommaire);
 
 
 
@@ -71,8 +73,27 @@ void CBR::extractArchive()
 
     ui.graphicsView->viewport()->installEventFilter(this);
 }
+void CBR::sommaire()
+{
+    ArchiveExtraction a("data/ex3.zip"); //get current archive from v
+    a.LireArchive("data/ex3.zip");
+    std::map<int, std::string> m_fileNames = a.GetListeFichier();
+    std::string m_currentFile = "46_008";
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Sommaire"));
+    dialog.setMinimumSize(400, 400); // Set the minimum size of the dialog
 
+    // Add a label for each file name, and highlight the current file name
+    for (const auto& fileName : m_fileNames) {
+        QLabel* label = new QLabel(QString::fromStdString(fileName.second), &dialog);
+        label->setStyleSheet("color: red; font-weight: bold; font-size: 16pt;"); // Set the font and color
+        label->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter); // Center the text horizontally and vertically
+    }
 
+    dialog.exec();
+}
+
+    
 void CBR::PageSuivante()
 {
 

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>882</width>
+    <width>878</width>
     <height>796</height>
    </rect>
   </property>
@@ -17,8 +17,8 @@
    <widget class="QPushButton" name="extractButton">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>220</y>
+      <x>10</x>
+      <y>110</y>
       <width>191</width>
       <height>24</height>
      </rect>
@@ -40,8 +40,8 @@
    <widget class="QPushButton" name="suivantButton">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>260</y>
+      <x>10</x>
+      <y>160</y>
       <width>191</width>
       <height>24</height>
      </rect>
@@ -53,8 +53,8 @@
    <widget class="QPushButton" name="precedantButton">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>300</y>
+      <x>10</x>
+      <y>210</y>
       <width>191</width>
       <height>24</height>
      </rect>
@@ -76,13 +76,84 @@
      <string>Create</string>
     </property>
    </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>300</y>
+      <width>121</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::NoFrame</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="text">
+     <string>Mode d'afficahge:</string>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="radioButton">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>340</y>
+      <width>88</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>1 page </string>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="radioButton_2">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>370</y>
+      <width>88</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>2 pages </string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="SommaireButton">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>260</y>
+      <width>191</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Sommaire</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="SaveButton">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>440</y>
+      <width>191</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Enregistrer L'image</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>882</width>
+     <width>878</width>
      <height>22</height>
     </rect>
    </property>

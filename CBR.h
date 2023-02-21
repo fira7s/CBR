@@ -20,6 +20,7 @@ public:
     void PageSuivante();
     void PagePrecedante();
     void createArchive();
+    void sommaire();
 private slots:
     void onViewDoubleClicked(QMouseEvent* event);
 
