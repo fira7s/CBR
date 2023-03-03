@@ -28,6 +28,7 @@
 #include <QVBoxLayout>
 #include <QListWidget>
 #include<QInputDialog>
+#include<QMessageBox>
 
 
 
@@ -42,6 +43,7 @@ CBR::CBR(QWidget *parent)
     connect(ui.precedantButton, &QPushButton::clicked, this, &CBR::PagePrecedante);
     connect(ui.createButton, &QPushButton::clicked, this, &CBR::createArchive);
     connect(ui.SommaireButton, &QPushButton::clicked, this, &CBR::sommaire);
+    connect(ui.SelectButton, &QPushButton::clicked, this, &CBR::loadImageFromZip);
 
 
 
@@ -102,7 +104,7 @@ void CBR::sommaire()
     ArchiveExtraction a("data/ex3.zip");
     a.LireArchive();
     std::map<int, std::string> m_fileNames = a.GetListeFichier();
-    std::string m_currentFile = "46_008";
+    std::string m_currentFile = m_fileNames[v.get_page_Number()];
 
     // Create a new dialog window
     QDialog dialog(this);
@@ -118,9 +120,11 @@ void CBR::sommaire()
     for (const auto& fileName : m_fileNames) {
         QListWidgetItem* item = new QListWidgetItem(QString::fromStdString(fileName.second));
         item->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter); // Center the text horizontally and vertically
-        if (fileName.second == m_currentFile) {
+        if (fileName.second.compare(m_currentFile) == 0) {
+            item = new QListWidgetItem(QString::fromStdString("<<< " + fileName.second + " >>>"));
+            item->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter); // Center the text horizontally and vertically
             item->setForeground(Qt::red); // Highlight the current file name in red
-            item->setFont(QFont("", 12, QFont::Bold)); // Set the font to bold
+            item->setFont(QFont("", 15, QFont::Bold)); // Set the font to bold
         }
         listWidget->addItem(item);
     }
@@ -134,6 +138,7 @@ void CBR::sommaire()
     dialog.exec();
 }
 
+
     
 void CBR::PageSuivante()
 {
@@ -142,24 +147,72 @@ void CBR::PageSuivante()
     QGraphicsScene* scene = new QGraphicsScene(this);
     ui.graphicsView->setScene(scene);
     ArchiveExtraction a(v.get_current_archvie());
-    v.set_page_number(v.get_page_Number() + 1);
     a.LireArchive();
-    cv::Mat image;
-    image = a.ChargerImage(v.get_page_Number());
-    QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
-    QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
-    scene->addItem(pixmapItem);
-    ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
+
+    if (v.get_page_Number() < a.GetNombreTotalePage() - 1)
+    {
+
+        v.set_page_number(v.get_page_Number() + 1);
 
 
-    ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-    ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-    ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
 
-    ui.graphicsView->setMouseTracking(true);
 
-    ui.graphicsView->viewport()->installEventFilter(this);
+        cv::Mat image;
+
+        image = a.ChargerImage(v.get_page_Number());
+
+
+        //image = a.ChargerImage(v.get_page_Number());
+        QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
+        QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
+        scene->addItem(pixmapItem);
+        ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
+
+
+        ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+        ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+
+        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+
+        ui.graphicsView->setMouseTracking(true);
+
+        ui.graphicsView->viewport()->installEventFilter(this);
+
+
+    }
+    else
+    {
+        //v.set_page_number(v.get_page_Number());
+
+
+
+
+
+        cv::Mat image;
+
+        image = a.ChargerImage(a.GetNombreTotalePage() - 1);
+
+
+        //image = a.ChargerImage(v.get_page_Number());
+        QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
+        QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
+        scene->addItem(pixmapItem);
+        ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
+
+
+        ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+        ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+
+        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+
+        ui.graphicsView->setMouseTracking(true);
+
+        ui.graphicsView->viewport()->installEventFilter(this);
+
+        QMessageBox::warning(nullptr, "Warning", "There is no page after this one!");
+
+    }
 
 
 }
@@ -171,24 +224,49 @@ void CBR::PagePrecedante()
     QGraphicsScene* scene = new QGraphicsScene(this);
     ui.graphicsView->setScene(scene);
     ArchiveExtraction a(v.get_current_archvie());
-    v.set_page_number(v.get_page_Number() - 1);
     a.LireArchive();
-    cv::Mat image;
-    image = a.ChargerImage(v.get_page_Number());
-    QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
-    QGraphicsPixmapItem * pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
-    scene->addItem(pixmapItem);
-    ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
+    if (v.get_page_Number() > 0)
+    {
+        v.set_page_number(v.get_page_Number() - 1);
+
+        cv::Mat image;
+        image = a.ChargerImage(v.get_page_Number());
+        QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
+        QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
+        scene->addItem(pixmapItem);
+        ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
 
 
-    ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-    ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+        ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+        ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-    ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
 
-    ui.graphicsView->setMouseTracking(true);
+        ui.graphicsView->setMouseTracking(true);
 
-    ui.graphicsView->viewport()->installEventFilter(this);
+        ui.graphicsView->viewport()->installEventFilter(this);
+    }
+    else
+    {
+        cv::Mat image;
+        image = a.ChargerImage(0);
+        QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
+        QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
+        scene->addItem(pixmapItem);
+        ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
+
+
+        ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+        ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+
+        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+
+        ui.graphicsView->setMouseTracking(true);
+
+        ui.graphicsView->viewport()->installEventFilter(this);
+        QMessageBox::warning(nullptr, "Warning", "There is no page before this one!");
+
+    }
 
 
 }
@@ -301,4 +379,53 @@ void CBR::createArchive()
     archive_write_free(a);
 
     QMessageBox::information(this, "Archive created", "The archive was successfully created.");
+}
+
+
+void CBR::loadImageFromZip()
+{
+    QWidget mainWidget;
+    mainWidget.setWindowTitle("Select Page");
+    int page_number = getNumberFromUser(&mainWidget);
+
+
+    QGraphicsScene* scene = new QGraphicsScene(this);
+    ui.graphicsView->setScene(scene);
+    ArchiveExtraction a(v.get_current_archvie());
+    a.LireArchive();
+
+
+    cv::Mat image;
+    image = a.ChargerImage(page_number);
+    v.set_page_number(page_number);
+    QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
+    QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
+    scene->addItem(pixmapItem);
+    ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
+
+
+    ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+    ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+
+    ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+
+    ui.graphicsView->setMouseTracking(true);
+
+    ui.graphicsView->viewport()->installEventFilter(this);
+
+
+}
+
+int CBR::getNumberFromUser(QWidget* parent)
+{
+    bool ok;
+    int number = QInputDialog::getInt(parent, "Enter Number", "Number:", 0, 0, INT_MAX, 1, &ok);
+    if (ok)
+    {
+        return number;
+    }
+    else
+    {
+        return -1; // ou une autre valeur pour indiquer une erreur ou une annulation de l'utilisateur
+    }
 }

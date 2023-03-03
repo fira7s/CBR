@@ -21,9 +21,11 @@ public:
     void PagePrecedante();
     void createArchive();
     void sommaire();
+    int getNumberFromUser(QWidget* parent);
+
 private slots:
     void onViewDoubleClicked(QMouseEvent* event);
-
+    void loadImageFromZip();
 protected:
     bool eventFilter(QObject* obj, QEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
