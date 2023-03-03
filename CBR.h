@@ -22,6 +22,7 @@ public:
     void createArchive();
     void sommaire();
     int getNumberFromUser(QWidget* parent);
+    void SaveImage();
 
 private slots:
     void onViewDoubleClicked(QMouseEvent* event);

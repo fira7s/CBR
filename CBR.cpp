@@ -44,7 +44,7 @@ CBR::CBR(QWidget *parent)
     connect(ui.createButton, &QPushButton::clicked, this, &CBR::createArchive);
     connect(ui.SommaireButton, &QPushButton::clicked, this, &CBR::sommaire);
     connect(ui.SelectButton, &QPushButton::clicked, this, &CBR::loadImageFromZip);
-
+    connect(ui.SaveButton, &QPushButton::clicked, this, &CBR::SaveImage);
 
 
 
@@ -428,4 +428,30 @@ int CBR::getNumberFromUser(QWidget* parent)
     {
         return -1; // ou une autre valeur pour indiquer une erreur ou une annulation de l'utilisateur
     }
+}
+
+
+
+void CBR::SaveImage()
+{
+    // Load the image and its filename from the archive
+    cv::Mat image;
+    ArchiveExtraction a(v.get_current_archvie());
+    a.LireArchive();
+    image = a.ChargerImage(v.get_page_Number());
+    std::string originalFilename = a.GetListeFichier()[v.get_page_Number()];
+
+    // Prompt the user to choose a directory to save the image
+    QString directory = QFileDialog::getExistingDirectory(this, tr("Save Image"), "");
+
+    // Check if the user canceled the dialog or didn't choose a directory
+    if (directory.isEmpty()) {
+        return;
+    }
+
+    // Combine the directory and the original filename to create the full file path
+    QString filePath = directory + "/" + QString::fromStdString(originalFilename);
+
+    // Save the image to the specified file path
+    cv::imwrite(filePath.toStdString(), image);
 }
