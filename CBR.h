@@ -23,6 +23,7 @@ public:
     void sommaire();
     int getNumberFromUser(QWidget* parent);
     void SaveImage();
+    void showAboutDialog();
 
 private slots:
     void onViewDoubleClicked(QMouseEvent* event);

@@ -45,8 +45,9 @@ CBR::CBR(QWidget *parent)
     connect(ui.SommaireButton, &QPushButton::clicked, this, &CBR::sommaire);
     connect(ui.SelectButton, &QPushButton::clicked, this, &CBR::loadImageFromZip);
     connect(ui.SaveButton, &QPushButton::clicked, this, &CBR::SaveImage);
-
-
+    QAction* aProposAction = new QAction(tr("A propos"), this);
+    menuBar()->addAction(aProposAction);
+    connect(aProposAction, &QAction::triggered, this, &CBR::showAboutDialog);
 
 }
 
@@ -153,8 +154,6 @@ void CBR::PageSuivante()
     {
 
         v.set_page_number(v.get_page_Number() + 1);
-
-
 
 
 
@@ -454,4 +453,10 @@ void CBR::SaveImage()
 
     // Save the image to the specified file path
     cv::imwrite(filePath.toStdString(), image);
+}
+
+
+void CBR::showAboutDialog()
+{
+    QMessageBox::information(this, tr("About"), tr("Projet IN204 2022/2023 -- ENSTA PARIS."));
 }
