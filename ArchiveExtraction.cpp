@@ -184,8 +184,6 @@ void ArchiveExtraction::Extract(const char* filename, int DoExtract, int flags, 
     for (;;)
     {
         r = archive_read_next_header(a, &entry);//lire chaque document dans l'archive
-        if (counteurNmbrPages > numPage)
-            break;
         if (r == ARCHIVE_EOF)//archive end of file
             break;
         if (r != ARCHIVE_OK)
@@ -194,9 +192,10 @@ void ArchiveExtraction::Extract(const char* filename, int DoExtract, int flags, 
             message("x ");
         if (verbose || !DoExtract)
             message(archive_entry_pathname(entry));
+        std::string NomFichier = archive_entry_pathname(entry);
         if (DoExtract)
         {
-            if (numPage == counteurNmbrPages) {
+            if (NomFichier == ListeFichier[numPage]) {
                 r = archive_write_header(ext, entry);
                 if (r != ARCHIVE_OK)
                     Notifier("archive_write_header()", archive_error_string(ext));
@@ -214,14 +213,6 @@ void ArchiveExtraction::Extract(const char* filename, int DoExtract, int flags, 
         if (verbose || !DoExtract)
             message("\n");
     }
-
-
-    archive_read_close(a);
-    archive_read_free(a);
-
-    archive_write_close(ext);
-    archive_write_free(ext);
-
 }
 
 

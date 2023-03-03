@@ -18,6 +18,18 @@
 #include <QDirIterator>
 #include <QDialog>
 #include <QPushButton>
+#include <QDirIterator>
+#include <QDialog>
+#include <QPushButton>
+#include <QIcon>
+#include <QWheelEvent>
+#include <QPointF> 
+#include <QSpacerItem>
+#include <QVBoxLayout>
+#include <QListWidget>
+#include<QInputDialog>
+
+
 
 
 
@@ -71,7 +83,7 @@ void CBR::extractArchive()
     ui.graphicsView->setScene(scene);
     ArchiveExtraction a("data/ex3.zip");
     cv::Mat image;
-    image = a.ChargerImage(8);
+    image = a.ChargerImage(v.get_page_Number());
     QImage qimage(image.data,image.cols,image.rows,image.step,QImage::Format_BGR888);
     QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
     scene->addItem(pixmapItem);
@@ -87,21 +99,38 @@ void CBR::extractArchive()
 }
 void CBR::sommaire()
 {
-    ArchiveExtraction a("data/ex3.zip"); //get current archive from v
+    ArchiveExtraction a("data/ex3.zip");
     a.LireArchive();
     std::map<int, std::string> m_fileNames = a.GetListeFichier();
     std::string m_currentFile = "46_008";
+
+    // Create a new dialog window
     QDialog dialog(this);
     dialog.setWindowTitle(tr("Sommaire"));
-    dialog.setMinimumSize(400, 400); // Set the minimum size of the dialog
+    dialog.setMinimumSize(400, 400);
 
-    // Add a label for each file name, and highlight the current file name
+    // Create a new list widget
+    QListWidget* listWidget = new QListWidget(&dialog);
+    listWidget->setSelectionMode(QAbstractItemView::SingleSelection); // Allow only one item to be selected
+    listWidget->setSpacing(10); // Set the spacing between items
+
+    // Add each file name to the list widget
     for (const auto& fileName : m_fileNames) {
-        QLabel* label = new QLabel(QString::fromStdString(fileName.second), &dialog);
-        label->setStyleSheet("color: red; font-weight: bold; font-size: 16pt;"); // Set the font and color
-        label->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter); // Center the text horizontally and vertically
+        QListWidgetItem* item = new QListWidgetItem(QString::fromStdString(fileName.second));
+        item->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter); // Center the text horizontally and vertically
+        if (fileName.second == m_currentFile) {
+            item->setForeground(Qt::red); // Highlight the current file name in red
+            item->setFont(QFont("", 12, QFont::Bold)); // Set the font to bold
+        }
+        listWidget->addItem(item);
     }
 
+    // Add the list widget to a vertical layout and set the layout for the dialog
+    QVBoxLayout* layout = new QVBoxLayout(&dialog);
+    layout->addWidget(listWidget);
+    dialog.setLayout(layout);
+
+    // Display the dialog window and wait for the user to close it
     dialog.exec();
 }
 
