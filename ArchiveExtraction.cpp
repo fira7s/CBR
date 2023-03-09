@@ -17,7 +17,7 @@
 #include <iostream>
 #include <map>
 #include <algorithm>
-
+#include<QDebug>
 
 ArchiveExtraction::~ArchiveExtraction()
 {}
@@ -147,44 +147,44 @@ bool ArchiveExtraction::DecompresserArchive(int numPage, std::string path)
 
     switch (mode) {
     case 't':
-        Extract(CheminFichier, 0, flags, numPage);
+        //Extract(CheminFichier, 0, flags, numPage);
         break;
     case 'x':
-        Extract(CheminFichier, 1, flags, numPage);
+        //Extract(CheminFichier, 1, flags, numPage);
         break;
     }
     return true;
 
 }
 
-
-void ArchiveExtraction::Extract(const char* filename, int DoExtract, int flags, int numPage)
+void ArchiveExtraction::Extract(const char* filename, int DoExtract, int flags, int numPage, cv::Mat& b)
 {
-
+    LireArchive();
     struct archive* a;
     struct archive* ext;
-    struct archive_entry* entry;//structure permet d'index chaque document dans archive
+    struct archive_entry* entry;
 
     int r;
     int counteurNmbrPages = 0;
 
-    a = archive_read_new();//initialise a pour la lecture
+    a = archive_read_new();
 
-    ext = archive_write_disk_new();
-    archive_write_disk_set_options(ext, flags);
+    // Create a memory-based archive object
+    ext = archive_write_new();
+    archive_write_set_format_ustar(ext);
 
-    archive_read_support_filter_all(a);//pour pouvoir lire tous les formats
+    archive_read_support_filter_all(a);
     archive_read_support_format_all(a);
 
     if (filename != NULL && strcmp(filename, "-") == 0)
         filename = NULL;
-    if ((r = archive_read_open_filename(a, filename, 10240)))// si on a bien ouvrir le file ou pas
+    if ((r = archive_read_open_filename(a, filename, 10240)))
         Echouer("archive_read_open_filename()", archive_error_string(a), r);
 
     for (;;)
     {
-        r = archive_read_next_header(a, &entry);//lire chaque document dans l'archive
-        if (r == ARCHIVE_EOF)//archive end of file
+        r = archive_read_next_header(a, &entry);
+        if (r == ARCHIVE_EOF)
             break;
         if (r != ARCHIVE_OK)
             Echouer("archive_read_next_header()", archive_error_string(a), 1);
@@ -195,28 +195,36 @@ void ArchiveExtraction::Extract(const char* filename, int DoExtract, int flags, 
         std::string NomFichier = archive_entry_pathname(entry);
         if (DoExtract)
         {
+            qDebug() << ("------nom-------"+NomFichier).c_str();
+            qDebug() << ("-----liste-----"+ListeFichier[numPage]).c_str();
             if (NomFichier == ListeFichier[numPage]) {
-                r = archive_write_header(ext, entry);
-                if (r != ARCHIVE_OK)
-                    Notifier("archive_write_header()", archive_error_string(ext));
-                else {
-                    CopierDonnees(a, ext);//copier un seul fichier de l'archive dans disque
+                    size_t entry_size = archive_entry_size(entry);
+                    std::vector<char> data(entry_size);
+                    archive_read_data(a, &data[0], entry_size);
+                    b = cv::imdecode(cv::Mat(data), cv::IMREAD_COLOR);
+                    qDebug() << "ok2";
+                    r = archive_write_data(ext, &data[0], entry_size);
+                    if (r != ARCHIVE_OK)
+                        Echouer("archive_write_data()", archive_error_string(ext), 1);
                     r = archive_write_finish_entry(ext);
-                    break;
                     if (r != ARCHIVE_OK)
                         Echouer("archive_write_finish_entry()", archive_error_string(ext), 1);
-
-                }
+                    break;
             }
             counteurNmbrPages += 1;
         }
         if (verbose || !DoExtract)
             message("\n");
     }
+
+    archive_write_free(ext);
+    archive_read_close(a);
+    archive_read_free(a);
 }
 
 
-cv::Mat ArchiveExtraction::ChargerImage(int numeroPage)
+
+bool ArchiveExtraction::ChargerImage(int numeroPage, cv::Mat& a)
 {//Charger une image d'un fichier
     LireArchive();
     std::string PathFile;
@@ -229,7 +237,7 @@ cv::Mat ArchiveExtraction::ChargerImage(int numeroPage)
         if (chaine[i] == lettre1) PathFile[i] = lettre2;
     }
     PathFile = PathFile + "/" + ListeFichier[numeroPage];
-    DecompresserArchive(numeroPage, CheminArchive);
-    cv::Mat temp_image = cv::imread(PathFile, cv::IMREAD_COLOR); //Charge une image à partir d'un fichier
-    return temp_image;
+    //DecompresserArchive(numeroPage, CheminArchive);
+    a= cv::imread(PathFile, cv::IMREAD_COLOR);
+    return true;
 }

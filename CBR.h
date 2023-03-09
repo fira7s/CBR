@@ -8,6 +8,8 @@
 #include <QPoint>
 #include <QEvent>
 #include <QGraphicsSceneMouseEvent>
+#include "preloadworker.h"
+
 
 class CBR : public QMainWindow
 {
@@ -41,5 +43,6 @@ private:
     bool m_dragging;
 public:
     currentView v;
+    PreLoadWorker p;
 
 };

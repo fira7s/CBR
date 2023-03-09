@@ -49,6 +49,12 @@
     <ClCompile Include="currentView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="preloadworker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="globals.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArchiveExtraction.h">
@@ -58,6 +64,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="currentView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cache.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="preloadworker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

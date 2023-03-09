@@ -109,6 +109,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="globals.cpp" />
+    <ClCompile Include="preloadworker.cpp" />
     <QtRcc Include="CBR.qrc" />
     <QtUic Include="CBR.ui" />
     <QtMoc Include="CBR.h" />
@@ -121,7 +123,9 @@
   <ItemGroup>
     <ClInclude Include="ArchiveExtraction.h" />
     <ClInclude Include="archives.h" />
+    <ClInclude Include="cache.h" />
     <ClInclude Include="currentView.h" />
+    <ClInclude Include="preloadworker.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

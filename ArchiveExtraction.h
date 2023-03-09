@@ -1,3 +1,6 @@
+#ifndef ARCHIVEEXTRACTION_H
+#define ARCHIVEEXTRACTION_H
+
 #include "Archives.h"
 #include <stdio.h>
 #include <string.h>
@@ -15,8 +18,11 @@ public:
     ArchiveExtraction(std::string path1);
     void SetNombreTotalPages(int nombre);
     void LireArchive();
-    cv::Mat ChargerImage(int numeroPage);
-    void Extract(const char* filename, int do_extract, int flags, int numPage);
+    bool ChargerImage(int numeroPage,cv::Mat&);
+    void Extract(const char* filename, int do_extract, int flags, int numPage, cv::Mat& a);
     bool DecompresserArchive(int numPage, std::string ArchivePathName1);
 
 };
+
+
+#endif
