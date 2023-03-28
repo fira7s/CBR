@@ -159,7 +159,7 @@ bool ArchiveExtraction::DecompresserArchive(int numPage, std::string path)
 
 void ArchiveExtraction::Extract(const char* filename, int DoExtract, int flags, int numPage, cv::Mat& b)
 {
-    LireArchive();
+    //LireArchive();
     struct archive* a;
     struct archive* ext;
     struct archive_entry* entry;
@@ -240,4 +240,10 @@ bool ArchiveExtraction::ChargerImage(int numeroPage, cv::Mat& a)
     //DecompresserArchive(numeroPage, CheminArchive);
     a= cv::imread(PathFile, cv::IMREAD_COLOR);
     return true;
+}
+
+
+void ArchiveExtraction::setPath(std::string path)
+{
+    CheminArchive = path;
 }

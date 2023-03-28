@@ -18,6 +18,7 @@ extern std::mutex g_preload_mutex;
 extern std::condition_variable g_preload_cv;
 extern bool g_is_exit;
 extern int currentPage;
+extern ArchiveExtraction current_Archive;
 
 class PreLoadWorker
 {

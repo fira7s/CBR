@@ -40,6 +40,7 @@ bool g_is_page_current_changed;
 bool g_is_preload_run;
 int currentPage;
 int g_page_num_total;
+ArchiveExtraction current_Archive;
 
 CBR::CBR(QWidget *parent)
     : QMainWindow(parent)
@@ -91,12 +92,14 @@ void CBR::extractArchive()
     }*/
     QGraphicsScene* scene = new QGraphicsScene(this);
     ui.graphicsView->setScene(scene);
-    currentPage = 8;
-    g_page_num_total = 400;
+    current_Archive.setPath(g_archive_path);
+    current_Archive.LireArchive();
+    g_page_num_total = current_Archive.GetNombreTotalePage();
+    currentPage = 0;
     p.loadAndCacheImage(currentPage);
     qDebug() << "ok4";
     cv::Mat image;
-    image = *cache.object(8)->cv_image_ptr;
+    image = *cache.object(0)->cv_image_ptr;
     qDebug() << "ok5";
     //image = a.ChargerImage(v.get_page_Number());
     QImage qimage(image.data,image.cols,image.rows,image.step,QImage::Format_BGR888);
@@ -160,7 +163,7 @@ void CBR::PageSuivante()
     QGraphicsScene* scene = new QGraphicsScene(this);
     ui.graphicsView->setScene(scene);
 
-    if (v.get_page_Number() < g_page_num_total - 1)
+    if (currentPage < g_page_num_total - 1)
     {
         currentPage += 1;
         p.loadAndCacheImage(currentPage);
@@ -286,15 +289,18 @@ bool CBR::eventFilter(QObject* obj, QEvent* event)
 {
     if (event->type() == QEvent::MouseButtonDblClick)
     {
-        onViewDoubleClicked(dynamic_cast<QMouseEvent*>(event));
-        return true;
+        // check if the mouse is over the graphics view
+        if (ui.graphicsView->underMouse()) {
+            onViewDoubleClicked(dynamic_cast<QMouseEvent*>(event));
+            return true;
+        }
     }
     return QObject::eventFilter(obj, event);
 }
 
 void CBR::mousePressEvent(QMouseEvent* event)
 {
-    if (event->button() == Qt::RightButton)
+    if (event->button() == Qt::RightButton && ui.graphicsView->underMouse())
     {
         // start dragging
         m_lastMousePos = event->pos();
@@ -304,7 +310,7 @@ void CBR::mousePressEvent(QMouseEvent* event)
 
 void CBR::mouseMoveEvent(QMouseEvent* event)
 {
-    if (m_dragging)
+    if (m_dragging && ui.graphicsView->underMouse())
     {
         // calculate the offset and move the view
         QPoint offset = event->pos() - m_lastMousePos;
@@ -312,6 +318,7 @@ void CBR::mouseMoveEvent(QMouseEvent* event)
         m_lastMousePos = event->pos();
     }
 }
+
 
 void CBR::mouseReleaseEvent(QMouseEvent* event)
 {
@@ -321,7 +328,6 @@ void CBR::mouseReleaseEvent(QMouseEvent* event)
         m_dragging = false;
     }
 }
-
 
 
 void CBR::createArchive()
