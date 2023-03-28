@@ -28,7 +28,8 @@ void PreLoadWorker::loadAndCacheImage(const int page_num) {
     image_data_ptr = new ImageData;
     //archive.ChargerImage(page_num, *(image_data_ptr->cv_image_ptr));
     qDebug() << "ok1";
-    archive.Extract("data/ex3.zip", 1, ARCHIVE_EXTRACT_TIME,page_num, *(image_data_ptr->cv_image_ptr));
+    const char* c_str = g_archive_path.c_str();
+    archive.Extract(c_str, 1, ARCHIVE_EXTRACT_TIME,page_num, *(image_data_ptr->cv_image_ptr));
     qDebug() << "ok3";
     cache_lock.lockForWrite();
     cache.insert(page_num,image_data_ptr);

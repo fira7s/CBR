@@ -195,8 +195,8 @@ void ArchiveExtraction::Extract(const char* filename, int DoExtract, int flags, 
         std::string NomFichier = archive_entry_pathname(entry);
         if (DoExtract)
         {
-            qDebug() << ("------nom-------"+NomFichier).c_str();
-            qDebug() << ("-----liste-----"+ListeFichier[numPage]).c_str();
+            //qDebug() << ("------nom-------"+NomFichier).c_str();
+            //qDebug() << ("-----liste-----"+ListeFichier[numPage]).c_str();
             if (NomFichier == ListeFichier[numPage]) {
                     size_t entry_size = archive_entry_size(entry);
                     std::vector<char> data(entry_size);

@@ -109,7 +109,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="globals.cpp" />
     <ClCompile Include="preloadworker.cpp" />
     <QtRcc Include="CBR.qrc" />
     <QtUic Include="CBR.ui" />

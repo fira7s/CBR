@@ -30,11 +30,16 @@
 #include<QInputDialog>
 #include<QMessageBox>
 #include "cache.h"
-#include "globals.cpp"
 
 
 
-
+std::string g_archive_path;
+QCache<int, ImageData> cache;
+QReadWriteLock cache_lock;
+bool g_is_page_current_changed;
+bool g_is_preload_run;
+int currentPage;
+int g_page_num_total;
 
 CBR::CBR(QWidget *parent)
     : QMainWindow(parent)
@@ -51,7 +56,7 @@ CBR::CBR(QWidget *parent)
     menuBar()->addAction(aProposAction);
     connect(aProposAction, &QAction::triggered, this, &CBR::showAboutDialog);
     p = PreLoadWorker();
-
+    g_archive_path = "data/ex3.zip";
 
 }
 
@@ -84,12 +89,11 @@ void CBR::extractArchive()
         scene->addItem(filenameItem);
         y += 20; // Increase y position for next filename
     }*/
-    v.set_current_archvie("data/ex3.zip");
-    v.set_page_number(0);
     QGraphicsScene* scene = new QGraphicsScene(this);
     ui.graphicsView->setScene(scene);
-    ArchiveExtraction a("data/ex3.zip");
-    p.loadAndCacheImage(8);
+    currentPage = 8;
+    g_page_num_total = 400;
+    p.loadAndCacheImage(currentPage);
     qDebug() << "ok4";
     cv::Mat image;
     image = *cache.object(8)->cv_image_ptr;
@@ -110,10 +114,10 @@ void CBR::extractArchive()
 }
 void CBR::sommaire()
 {
-    ArchiveExtraction a("data/ex3.zip");
+    ArchiveExtraction a(g_archive_path);
     a.LireArchive();
     std::map<int, std::string> m_fileNames = a.GetListeFichier();
-    std::string m_currentFile = m_fileNames[v.get_page_Number()];
+    std::string m_currentFile = m_fileNames[currentPage];
 
     // Create a new dialog window
     QDialog dialog(this);
@@ -155,28 +159,20 @@ void CBR::PageSuivante()
 
     QGraphicsScene* scene = new QGraphicsScene(this);
     ui.graphicsView->setScene(scene);
-    ArchiveExtraction a(v.get_current_archvie());
-    a.LireArchive();
 
-    if (v.get_page_Number() < a.GetNombreTotalePage() - 1)
+    if (v.get_page_Number() < g_page_num_total - 1)
     {
-
-        v.set_page_number(v.get_page_Number() + 1);
-
-
-
+        currentPage += 1;
+        p.loadAndCacheImage(currentPage);
+        qDebug() << "ok4";
         cv::Mat image;
-
-        //image = a.ChargerImage(v.get_page_Number());
-
-
+        image = *cache.object(currentPage)->cv_image_ptr;
+        qDebug() << "ok5";
         //image = a.ChargerImage(v.get_page_Number());
         QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
         QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
         scene->addItem(pixmapItem);
         ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
-
-
         ui.graphicsView->setRenderHint(QPainter::Antialiasing);
         ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
@@ -186,28 +182,19 @@ void CBR::PageSuivante()
 
         ui.graphicsView->viewport()->installEventFilter(this);
 
-
     }
     else
     {
-        //v.set_page_number(v.get_page_Number());
-
-
-
-
-
+        p.loadAndCacheImage(currentPage);
+        qDebug() << "ok4";
         cv::Mat image;
-
-        //image = a.ChargerImage(a.GetNombreTotalePage() - 1);
-
-
+        image = *cache.object(currentPage)->cv_image_ptr;
+        qDebug() << "ok5";
         //image = a.ChargerImage(v.get_page_Number());
         QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
         QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
         scene->addItem(pixmapItem);
         ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
-
-
         ui.graphicsView->setRenderHint(QPainter::Antialiasing);
         ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
@@ -230,21 +217,21 @@ void CBR::PagePrecedante()
 
     QGraphicsScene* scene = new QGraphicsScene(this);
     ui.graphicsView->setScene(scene);
-    ArchiveExtraction a(v.get_current_archvie());
-    a.LireArchive();
-    if (v.get_page_Number() > 0)
-    {
-        v.set_page_number(v.get_page_Number() - 1);
 
+    if (currentPage > 0)
+    {
+        currentPage -= 1;
+
+        p.loadAndCacheImage(currentPage);
+        qDebug() << "ok4";
         cv::Mat image;
-        //image_data_ptr = cache.object(0);
-        //image = cache()
+        image = *cache.object(currentPage)->cv_image_ptr;
+        qDebug() << "ok5";
+        //image = a.ChargerImage(v.get_page_Number());
         QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
         QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
         scene->addItem(pixmapItem);
         ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
-
-
         ui.graphicsView->setRenderHint(QPainter::Antialiasing);
         ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
@@ -256,14 +243,16 @@ void CBR::PagePrecedante()
     }
     else
     {
+        p.loadAndCacheImage(currentPage);
+        qDebug() << "ok4";
         cv::Mat image;
-        //image = a.ChargerImage(0);
+        image = *cache.object(currentPage)->cv_image_ptr;
+        qDebug() << "ok5";
+        //image = a.ChargerImage(v.get_page_Number());
         QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
         QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
         scene->addItem(pixmapItem);
         ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
-
-
         ui.graphicsView->setRenderHint(QPainter::Antialiasing);
         ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
@@ -395,23 +384,20 @@ void CBR::loadImageFromZip()
     QWidget mainWidget;
     mainWidget.setWindowTitle("Select Page");
     int page_number = getNumberFromUser(&mainWidget);
-
+    currentPage = page_number;
 
     QGraphicsScene* scene = new QGraphicsScene(this);
     ui.graphicsView->setScene(scene);
-    ArchiveExtraction a(v.get_current_archvie());
-    a.LireArchive();
-
-
+    p.loadAndCacheImage(currentPage);
+    qDebug() << "ok4";
     cv::Mat image;
-    //image = a.ChargerImage(page_number);
-    v.set_page_number(page_number);
+    image = *cache.object(currentPage)->cv_image_ptr;
+    qDebug() << "ok5";
+    //image = a.ChargerImage(v.get_page_Number());
     QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
     QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
     scene->addItem(pixmapItem);
     ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
-
-
     ui.graphicsView->setRenderHint(QPainter::Antialiasing);
     ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
@@ -420,7 +406,6 @@ void CBR::loadImageFromZip()
     ui.graphicsView->setMouseTracking(true);
 
     ui.graphicsView->viewport()->installEventFilter(this);
-
 
 }
 
@@ -444,11 +429,12 @@ void CBR::SaveImage()
 {
     // Load the image and its filename from the archive
     cv::Mat image;
-    ArchiveExtraction a(v.get_current_archvie());
+    ArchiveExtraction a(g_archive_path);
     a.LireArchive();
-    //image = a.ChargerImage(v.get_page_Number());
-    std::string originalFilename = a.GetListeFichier()[v.get_page_Number()];
-
+    image = *cache.object(currentPage)->cv_image_ptr;
+    std::string originalFilename = a.GetListeFichier()[currentPage];
+    QString qstr = QString::fromStdString(originalFilename);
+    qDebug() << qstr;
     // Prompt the user to choose a directory to save the image
     QString directory = QFileDialog::getExistingDirectory(this, tr("Save Image"), "");
 
