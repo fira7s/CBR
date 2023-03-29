@@ -56,6 +56,12 @@ static void Notifier(const char* f, const char* m)
 
 }
 static void message(const char* m){}
+
+
+
+
+
+
 static int CopierDonnees(struct archive* ar, struct archive* aw)
 {
     int r;
@@ -130,32 +136,6 @@ void ArchiveExtraction::LireArchive()
 
 
 
-bool ArchiveExtraction::DecompresserArchive(int numPage, std::string path)
-{//Decompresser une page d'une archive
-    if (numPage<0 || numPage>nombreTotalPages)
-    {
-        return false;
-    }
-
-    const char* ArchivePathName = path.c_str();
-    const char* CheminFichier = ArchivePathName;
-
-    int flags, mode;
-    mode = 'x';
-    verbose = 0;
-    flags = ARCHIVE_EXTRACT_TIME;
-
-    switch (mode) {
-    case 't':
-        //Extract(CheminFichier, 0, flags, numPage);
-        break;
-    case 'x':
-        //Extract(CheminFichier, 1, flags, numPage);
-        break;
-    }
-    return true;
-
-}
 
 void ArchiveExtraction::Extract(const char* filename, int DoExtract, int flags, int numPage, cv::Mat& b)
 {
@@ -222,25 +202,6 @@ void ArchiveExtraction::Extract(const char* filename, int DoExtract, int flags, 
     archive_read_free(a);
 }
 
-
-
-bool ArchiveExtraction::ChargerImage(int numeroPage, cv::Mat& a)
-{//Charger une image d'un fichier
-    LireArchive();
-    std::string PathFile;
-    PathFile = std::filesystem::current_path().string();
-    char lettre1 = '\\';
-    char lettre2 = '/';
-    char* chaine = (char*)PathFile.c_str();
-    for (size_t i = 0; i < strlen(chaine); i++)
-    {
-        if (chaine[i] == lettre1) PathFile[i] = lettre2;
-    }
-    PathFile = PathFile + "/" + ListeFichier[numeroPage];
-    //DecompresserArchive(numeroPage, CheminArchive);
-    a= cv::imread(PathFile, cv::IMREAD_COLOR);
-    return true;
-}
 
 
 void ArchiveExtraction::setPath(std::string path)

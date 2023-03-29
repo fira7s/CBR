@@ -19,9 +19,7 @@ public:
     void SetNombreTotalPages(int nombre);
     void setPath(std::string path);
     void LireArchive();
-    bool ChargerImage(int numeroPage,cv::Mat&);
     void Extract(const char* filename, int do_extract, int flags, int numPage, cv::Mat& a);
-    bool DecompresserArchive(int numPage, std::string ArchivePathName1);
 };
 
 
