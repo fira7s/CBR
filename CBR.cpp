@@ -32,15 +32,15 @@
 #include "cache.h"
 
 
-
+//global params
 QCache<int, ImageData> cache;
 QReadWriteLock cache_lock;
 ArchiveExtraction current_Archive;
 std::string g_archive_path;
 int currentPage;
+bool single_view=true;
 
-
-
+// thread 2 params
 bool g_is_page_current_changed=false;
 bool g_is_path_changed=false;
 int g_page_num_total=191;
@@ -61,6 +61,9 @@ CBR::CBR(QWidget *parent)
     connect(ui.SommaireButton, &QPushButton::clicked, this, &CBR::sommaire);
     connect(ui.SelectButton, &QPushButton::clicked, this, &CBR::loadImageFromZip);
     connect(ui.SaveButton, &QPushButton::clicked, this, &CBR::SaveImage);
+    connect(ui.radioButton, &QRadioButton::clicked, this, &CBR::single_view_change);
+    ui.radioButton->setChecked(true);
+    connect(ui.radioButton_2, &QRadioButton::clicked, this, &CBR::double_view_change);
     QAction* aProposAction = new QAction(tr("A propos"), this);
     menuBar()->addAction(aProposAction);
     connect(aProposAction, &QAction::triggered, this, &CBR::showAboutDialog);
@@ -76,54 +79,74 @@ CBR::~CBR()
 
 void CBR::extractArchive()
 {
-    /*ArchiveExtraction a("data/ex3.zip");
-    a.LireArchive();
-    a.DecompresserArchive(0, "data/ex3.zip");
-    QGraphicsScene* scene = new QGraphicsScene(this);
-    ui.graphicsView->setScene(scene);
 
-    // Print number of pages
-    QGraphicsTextItem* textItem = new QGraphicsTextItem(QString::number(a.GetNombreTotalePage()));
-    textItem->setPos(50, 50);
-    scene->addItem(textItem);
-
-    // Print filenames
-    int y = 80; // Starting y position for filenames
-    std::map<int, std::string> fileMap = a.GetListeFichier();
-    for (auto const& file : fileMap)
-    {
-        QGraphicsTextItem* filenameItem = new QGraphicsTextItem(QString::fromStdString(file.second));
-        filenameItem->setPos(50, y);    
-        scene->addItem(filenameItem);
-        y += 20; // Increase y position for next filename
-    }*/
-    QGraphicsScene* scene = new QGraphicsScene(this);
-    ui.graphicsView->setScene(scene);
     current_Archive.setPath(g_archive_path);
     current_Archive.LireArchive();
     g_page_num_total = current_Archive.GetNombreTotalePage();
-    currentPage = 0;
-    g_preload_mutex.lock();
-    p.loadAndCacheImage(currentPage);
-    preloaded = false;
-    g_preload_mutex.unlock();
-    qDebug() << "ok4";
-    cv::Mat image;
-    image = *cache.object(0)->cv_image_ptr;
-    qDebug() << "ok5";
-    //image = a.ChargerImage(v.get_page_Number());
-    QImage qimage(image.data,image.cols,image.rows,image.step,QImage::Format_BGR888);
-    QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
-    scene->addItem(pixmapItem);
-    ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
-    ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-    ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-    ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
 
-    ui.graphicsView->setMouseTracking(true);
+    QGraphicsScene* scene = new QGraphicsScene();
+    ui.graphicsView->setScene(scene);
+    if (single_view) 
+    {
+        currentPage = 0;
+        g_preload_mutex.lock();
+        p.loadAndCacheImage(currentPage);
+        preloaded = false;
+        g_preload_mutex.unlock();
+        cv::Mat image = *cache.object(currentPage)->cv_image_ptr;
+        QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
+        QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
+        scene->addItem(pixmapItem);
+        ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
+        ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+        ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-    ui.graphicsView->viewport()->installEventFilter(this);
+        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+
+        ui.graphicsView->setMouseTracking(true);
+
+        ui.graphicsView->viewport()->installEventFilter(this);
+    }
+    else
+    {
+        currentPage = 1;
+        g_preload_mutex.lock();
+        p.loadAndCacheImage(currentPage);
+        p.loadAndCacheImage(currentPage-1);
+        preloaded = false;
+        g_preload_mutex.unlock();
+        cv::Mat image1 = *cache.object(currentPage-1)->cv_image_ptr;
+        cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
+
+        QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
+        QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
+
+        // Load the second image
+        QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
+        QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
+
+        // Add both items to the scene
+
+        scene->addItem(pixmapItem1);
+        scene->addItem(pixmapItem2);
+
+        // Position the items side by side
+        int padding = 20; // adjust the padding to your liking
+        pixmapItem1->setPos(0, 0);
+        pixmapItem2->setPos(image1.cols + padding, 0);
+
+        // Set the view's scene and fit the view to the scene
+        ui.graphicsView->setScene(scene);
+        ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
+        ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+        ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+
+        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+        ui.graphicsView->setMouseTracking(true);
+        ui.graphicsView->viewport()->installEventFilter(this);
+    }
+
 }
 void CBR::sommaire()
 {
@@ -175,60 +198,126 @@ void CBR::PageSuivante()
 
     if (currentPage < g_page_num_total - 1)
     {
-        currentPage += 1;
-        g_is_page_current_changed = true;
-        g_preload_mutex.lock();
-        p.loadAndCacheImage(currentPage);
-        preloaded = false;
-        g_preload_mutex.unlock();
-        qDebug() << "ok4";
-        cv::Mat image;
-        image = *cache.object(currentPage)->cv_image_ptr;
-        qDebug() << "ok5";
-        //image = a.ChargerImage(v.get_page_Number());
-        QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
-        QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
-        scene->addItem(pixmapItem);
-        ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
-        ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-        ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+        if (single_view)
+        {
+            currentPage+=1;
+            g_is_page_current_changed = true;
+            g_preload_mutex.lock();
+            p.loadAndCacheImage(currentPage);
+            preloaded = false;
+            g_preload_mutex.unlock();
+            cv::Mat image;
+            image = *cache.object(currentPage)->cv_image_ptr;
+            QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
+            QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
+            scene->addItem(pixmapItem);
+            ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
+            ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+            ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
 
-        ui.graphicsView->setMouseTracking(true);
+            ui.graphicsView->setMouseTracking(true);
 
-        ui.graphicsView->viewport()->installEventFilter(this);
+            ui.graphicsView->viewport()->installEventFilter(this);
+        }
+        else
+        {
+            currentPage+=2;
+            g_is_page_current_changed = true;
+            g_preload_mutex.lock();
+            p.loadAndCacheImage(currentPage);
+            p.loadAndCacheImage(currentPage - 1);
+            preloaded = false;
+            g_preload_mutex.unlock();
+            cv::Mat image1 = *cache.object(currentPage - 1)->cv_image_ptr;
+            cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
 
+            QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
+            QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
+
+            // Load the second image
+            QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
+            QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
+
+            // Add both items to the scene
+
+            scene->addItem(pixmapItem1);
+            scene->addItem(pixmapItem2);
+
+            // Position the items side by side
+            int padding = 20; // adjust the padding to your liking
+            pixmapItem1->setPos(0, 0);
+            pixmapItem2->setPos(image1.cols + padding, 0);
+
+
+            // Set the view's scene and fit the view to the scene
+            ui.graphicsView->setScene(scene);
+            ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
+            ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+            ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+
+            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+            ui.graphicsView->setMouseTracking(true);
+            ui.graphicsView->viewport()->installEventFilter(this);
+        }
     }
     else
     {
-        g_preload_mutex.lock();
-        p.loadAndCacheImage(currentPage);
-        preloaded = false;
-        g_preload_mutex.unlock();
-        qDebug() << "ok4";
-        cv::Mat image;
-        image = *cache.object(currentPage)->cv_image_ptr;
-        qDebug() << "ok5";
-        //image = a.ChargerImage(v.get_page_Number());
-        QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
-        QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
-        scene->addItem(pixmapItem);
-        ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
-        ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-        ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+        if (single_view)
+        {
+            cv::Mat image = *cache.object(currentPage)->cv_image_ptr;
+            QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
+            QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
+            scene->addItem(pixmapItem);
+            ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
+            ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+            ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
 
-        ui.graphicsView->setMouseTracking(true);
+            ui.graphicsView->setMouseTracking(true);
 
-        ui.graphicsView->viewport()->installEventFilter(this);
+            ui.graphicsView->viewport()->installEventFilter(this);
+            QMessageBox::warning(nullptr, "Warning", "There is no page after this one!");
 
-        QMessageBox::warning(nullptr, "Warning", "There is no page after this one!");
+        }
+        else
+        {
+          
+            cv::Mat image1 = *cache.object(currentPage - 1)->cv_image_ptr;
+            cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
 
+            QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
+            QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
+
+            // Load the second image
+            QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
+            QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
+
+            // Add both items to the scene
+
+            scene->addItem(pixmapItem1);
+            scene->addItem(pixmapItem2);
+
+            // Position the items side by side
+            int padding = 20; // adjust the padding to your liking
+            pixmapItem1->setPos(0, 0);
+            pixmapItem2->setPos(image1.cols + padding, 0);
+
+            // Set the view's scene and fit the view to the scene
+            ui.graphicsView->setScene(scene);
+            ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
+            ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+            ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+
+            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+            ui.graphicsView->setMouseTracking(true);
+            ui.graphicsView->viewport()->installEventFilter(this);
+            QMessageBox::warning(nullptr, "Warning", "There is no page after this one!");
+
+        }
     }
-
-
 }
 
 
@@ -240,54 +329,127 @@ void CBR::PagePrecedante()
 
     if (currentPage > 0)
     {
-        currentPage -= 1;
-        g_is_page_current_changed = true;
-        g_preload_mutex.lock();
-        p.loadAndCacheImage(currentPage);
-        preloaded = false;
-        g_preload_mutex.unlock();
-        qDebug() << "ok4";
-        cv::Mat image;
-        image = *cache.object(currentPage)->cv_image_ptr;
-        qDebug() << "ok5";
-        //image = a.ChargerImage(v.get_page_Number());
-        QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
-        QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
-        scene->addItem(pixmapItem);
-        ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
-        ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-        ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+        if (single_view)
+        {
+            currentPage -= 1;
+            g_is_page_current_changed = true;
+            g_preload_mutex.lock();
+            p.loadAndCacheImage(currentPage);
+            preloaded = false;
+            g_preload_mutex.unlock();
+            cv::Mat image;
+            image = *cache.object(currentPage)->cv_image_ptr;
+            QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
+            QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
+            scene->addItem(pixmapItem);
+            ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
+            ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+            ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
 
-        ui.graphicsView->setMouseTracking(true);
+            ui.graphicsView->setMouseTracking(true);
 
-        ui.graphicsView->viewport()->installEventFilter(this);
+            ui.graphicsView->viewport()->installEventFilter(this);
+        }
+        else
+        {
+            currentPage -= 2;
+            g_is_page_current_changed = true;
+            g_preload_mutex.lock();
+            p.loadAndCacheImage(currentPage);
+            p.loadAndCacheImage(currentPage - 1);
+            preloaded = false;
+            g_preload_mutex.unlock();
+            cv::Mat image1 = *cache.object(currentPage - 1)->cv_image_ptr;
+            cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
+
+            QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
+            QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
+
+            // Load the second image
+            QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
+            QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
+
+            // Add both items to the scene
+
+            scene->addItem(pixmapItem1);
+            scene->addItem(pixmapItem2);
+
+            // Position the items side by side
+            int padding = 20; // adjust the padding to your liking
+            pixmapItem1->setPos(0, 0);
+            pixmapItem2->setPos(image1.cols + padding, 0);
+
+
+            // Set the view's scene and fit the view to the scene
+            ui.graphicsView->setScene(scene);
+            ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
+            ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+            ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+
+            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+            ui.graphicsView->setMouseTracking(true);
+            ui.graphicsView->viewport()->installEventFilter(this);
+        }
+
     }
     else
     {
-        g_preload_mutex.lock();
-        p.loadAndCacheImage(currentPage);
-        preloaded = false;
-        g_preload_mutex.unlock();
-        qDebug() << "ok4";
-        cv::Mat image;
-        image = *cache.object(currentPage)->cv_image_ptr;
-        qDebug() << "ok5";
-        //image = a.ChargerImage(v.get_page_Number());
-        QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
-        QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
-        scene->addItem(pixmapItem);
-        ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
-        ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-        ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+        if (single_view)
+        {
+            cv::Mat image = *cache.object(currentPage)->cv_image_ptr;
+            QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
+            QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
+            scene->addItem(pixmapItem);
+            ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
+            ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+            ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
 
-        ui.graphicsView->setMouseTracking(true);
+            ui.graphicsView->setMouseTracking(true);
 
-        ui.graphicsView->viewport()->installEventFilter(this);
-        QMessageBox::warning(nullptr, "Warning", "There is no page before this one!");
+            ui.graphicsView->viewport()->installEventFilter(this);
+            QMessageBox::warning(nullptr, "Warning", "There is no page before this one!");
+
+        }
+        else
+        {
+           
+            cv::Mat image1 = *cache.object(currentPage - 1)->cv_image_ptr;
+            cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
+
+            QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
+            QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
+
+            // Load the second image
+            QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
+            QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
+
+            // Add both items to the scene
+
+            scene->addItem(pixmapItem1);
+            scene->addItem(pixmapItem2);
+
+            // Position the items side by side
+            int padding = 20; // adjust the padding to your liking
+            pixmapItem1->setPos(0, 0);
+            pixmapItem2->setPos(image1.cols + padding, 0);
+
+
+            // Set the view's scene and fit the view to the scene
+            ui.graphicsView->setScene(scene);
+            ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
+            ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+            ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+
+            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+            ui.graphicsView->setMouseTracking(true);
+            ui.graphicsView->viewport()->installEventFilter(this);
+            QMessageBox::warning(nullptr, "Warning", "There is no page before this one!");
+
+        }
 
     }
 
@@ -417,28 +579,63 @@ void CBR::loadImageFromZip()
 
     QGraphicsScene* scene = new QGraphicsScene(this);
     ui.graphicsView->setScene(scene);
-    g_is_page_current_changed = true;
-    g_preload_mutex.lock();
-    p.loadAndCacheImage(currentPage);
-    preloaded = false;
-    g_preload_mutex.unlock();
-    qDebug() << "ok4";
-    cv::Mat image;
-    image = *cache.object(currentPage)->cv_image_ptr;
-    qDebug() << "ok5";
-    //image = a.ChargerImage(v.get_page_Number());
-    QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
-    QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
-    scene->addItem(pixmapItem);
-    ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
-    ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-    ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+    if (single_view)
+    {
+        g_preload_mutex.lock();
+        p.loadAndCacheImage(currentPage);
+        preloaded = false;
+        g_preload_mutex.unlock();
+        cv::Mat image = *cache.object(currentPage)->cv_image_ptr;
+        QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
+        QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
+        scene->addItem(pixmapItem);
+        ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
+        ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+        ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-    ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
 
-    ui.graphicsView->setMouseTracking(true);
+        ui.graphicsView->setMouseTracking(true);
 
-    ui.graphicsView->viewport()->installEventFilter(this);
+        ui.graphicsView->viewport()->installEventFilter(this);
+    }
+    else
+    {
+        g_preload_mutex.lock();
+        p.loadAndCacheImage(currentPage);
+        p.loadAndCacheImage(currentPage - 1);
+        preloaded = false;
+        g_preload_mutex.unlock();
+        cv::Mat image1 = *cache.object(currentPage - 1)->cv_image_ptr;
+        cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
+
+        QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
+        QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
+
+        // Load the second image
+        QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
+        QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
+
+        // Add both items to the scene
+
+        scene->addItem(pixmapItem1);
+        scene->addItem(pixmapItem2);
+
+        // Position the items side by side
+        int padding = 20; // adjust the padding to your liking
+        pixmapItem1->setPos(0, 0);
+        pixmapItem2->setPos(image1.cols + padding, 0);
+
+        // Set the view's scene and fit the view to the scene
+        ui.graphicsView->setScene(scene);
+        ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
+        ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+        ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+
+        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+        ui.graphicsView->setMouseTracking(true);
+        ui.graphicsView->viewport()->installEventFilter(this);
+    }
 
 }
 
@@ -487,4 +684,75 @@ void CBR::SaveImage()
 void CBR::showAboutDialog()
 {
     QMessageBox::information(this, tr("About"), tr("Projet IN204 2022/2023 -- ENSTA PARIS."));
+}
+
+
+void CBR::single_view_change()
+{
+ if (single_view == false) { currentPage -= 1;}
+ single_view = true;
+ QGraphicsScene* scene = new QGraphicsScene(this);
+ ui.graphicsView->setScene(scene);
+ g_preload_mutex.lock();
+ p.loadAndCacheImage(currentPage);
+ preloaded = false;
+ g_preload_mutex.unlock();
+ cv::Mat image = *cache.object(currentPage)->cv_image_ptr;
+ QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
+ QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
+ scene->addItem(pixmapItem);
+ ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
+ ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+ ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+
+ ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+
+ ui.graphicsView->setMouseTracking(true);
+ ui.graphicsView->viewport()->installEventFilter(this);
+ 
+
+}
+
+void CBR::double_view_change()
+{
+    if (single_view = true) { currentPage += 1; }
+    single_view = false;
+    QGraphicsScene* scene = new QGraphicsScene(this);
+    ui.graphicsView->setScene(scene);
+
+        g_preload_mutex.lock();
+        p.loadAndCacheImage(currentPage);
+        p.loadAndCacheImage(currentPage - 1);
+        preloaded = false;
+        g_preload_mutex.unlock();
+        cv::Mat image1 = *cache.object(currentPage - 1)->cv_image_ptr;
+        cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
+
+        QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
+        QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
+
+        // Load the second image
+        QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
+        QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
+
+        // Add both items to the scene
+
+        scene->addItem(pixmapItem1);
+        scene->addItem(pixmapItem2);
+
+        // Position the items side by side
+        int padding = 20; // adjust the padding to your liking
+        pixmapItem1->setPos(0, 0);
+        pixmapItem2->setPos(image1.cols + padding, 0);
+
+        // Set the view's scene and fit the view to the scene
+        ui.graphicsView->setScene(scene);
+        ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
+        ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+        ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+
+        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+        ui.graphicsView->setMouseTracking(true);
+        ui.graphicsView->viewport()->installEventFilter(this);
+
 }

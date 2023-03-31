@@ -26,7 +26,8 @@ public:
     int getNumberFromUser(QWidget* parent);
     void SaveImage();
     void showAboutDialog();
-
+    void single_view_change();
+    void double_view_change();
 private slots:
     void onViewDoubleClicked(QMouseEvent* event);
     void loadImageFromZip();
