@@ -4,7 +4,7 @@
 #include <QFileDialog>
 #include <QGraphicsScene>
 #include <QGraphicsTextItem>
-#include "ArchiveExtraction.h"
+#include "CommonArchives.h"
 #include <opencv2/opencv.hpp>
 #include <QMouseEvent>
 #include <QGraphicsView>
@@ -35,7 +35,7 @@
 //global params
 QCache<int, ImageData> cache;
 QReadWriteLock cache_lock;
-ArchiveExtraction current_Archive;
+CommonArchives current_Archive;
 std::string current_archive_path;
 int currentPage;
 bool single_view=true;
@@ -103,7 +103,7 @@ void CBR::extractArchive()
         ui.graphicsView->setRenderHint(QPainter::Antialiasing);
         ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); 
 
         ui.graphicsView->setMouseTracking(true);
 
@@ -122,28 +122,23 @@ void CBR::extractArchive()
 
         QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
         QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
-
-        // Load the second image
         QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
         QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
 
-        // Add both items to the scene
 
         scene->addItem(pixmapItem1);
         scene->addItem(pixmapItem2);
 
-        // Position the items side by side
-        int padding = 20; // adjust the padding to your liking
+        int padding = 20; 
         pixmapItem1->setPos(0, 0);
         pixmapItem2->setPos(image1.cols + padding, 0);
 
-        // Set the view's scene and fit the view to the scene
         ui.graphicsView->setScene(scene);
         ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
         ui.graphicsView->setRenderHint(QPainter::Antialiasing);
         ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); 
         ui.graphicsView->setMouseTracking(true);
         ui.graphicsView->viewport()->installEventFilter(this);
     }
@@ -151,40 +146,35 @@ void CBR::extractArchive()
 }
 void CBR::sommaire()
 {
-    ArchiveExtraction a(current_archive_path);
+    CommonArchives a(current_archive_path);
     a.LireArchive();
     std::map<int, std::string> m_fileNames = a.GetListeFichier();
     std::string m_currentFile = m_fileNames[currentPage];
 
-    // Create a new dialog window
     QDialog dialog(this);
     dialog.setWindowTitle(tr("Sommaire"));
     dialog.setMinimumSize(400, 400);
 
-    // Create a new list widget
     QListWidget* listWidget = new QListWidget(&dialog);
-    listWidget->setSelectionMode(QAbstractItemView::SingleSelection); // Allow only one item to be selected
-    listWidget->setSpacing(10); // Set the spacing between items
+    listWidget->setSelectionMode(QAbstractItemView::SingleSelection); 
+    listWidget->setSpacing(10);
 
-    // Add each file name to the list widget
     for (const auto& fileName : m_fileNames) {
         QListWidgetItem* item = new QListWidgetItem(QString::fromStdString(fileName.second));
-        item->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter); // Center the text horizontally and vertically
+        item->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter); 
         if (fileName.second.compare(m_currentFile) == 0) {
             item = new QListWidgetItem(QString::fromStdString("<<< " + fileName.second + " >>>"));
-            item->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter); // Center the text horizontally and vertically
-            item->setForeground(Qt::red); // Highlight the current file name in red
-            item->setFont(QFont("", 15, QFont::Bold)); // Set the font to bold
+            item->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter); 
+            item->setForeground(Qt::red);
+            item->setFont(QFont("", 15, QFont::Bold)); 
         }
         listWidget->addItem(item);
     }
 
-    // Add the list widget to a vertical layout and set the layout for the dialog
     QVBoxLayout* layout = new QVBoxLayout(&dialog);
     layout->addWidget(listWidget);
     dialog.setLayout(layout);
 
-    // Display the dialog window and wait for the user to close it
     dialog.exec();
 }
 
@@ -216,7 +206,7 @@ void CBR::PageSuivante()
             ui.graphicsView->setRenderHint(QPainter::Antialiasing);
             ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); 
 
             ui.graphicsView->setMouseTracking(true);
 
@@ -237,28 +227,24 @@ void CBR::PageSuivante()
             QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
             QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
 
-            // Load the second image
             QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
             QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
 
-            // Add both items to the scene
 
             scene->addItem(pixmapItem1);
             scene->addItem(pixmapItem2);
 
-            // Position the items side by side
-            int padding = 20; // adjust the padding to your liking
+            int padding = 20;
             pixmapItem1->setPos(0, 0);
             pixmapItem2->setPos(image1.cols + padding, 0);
 
 
-            // Set the view's scene and fit the view to the scene
             ui.graphicsView->setScene(scene);
             ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
             ui.graphicsView->setRenderHint(QPainter::Antialiasing);
             ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
             ui.graphicsView->setMouseTracking(true);
             ui.graphicsView->viewport()->installEventFilter(this);
         }
@@ -275,7 +261,7 @@ void CBR::PageSuivante()
             ui.graphicsView->setRenderHint(QPainter::Antialiasing);
             ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); 
 
             ui.graphicsView->setMouseTracking(true);
 
@@ -292,27 +278,23 @@ void CBR::PageSuivante()
             QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
             QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
 
-            // Load the second image
             QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
             QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
 
-            // Add both items to the scene
 
             scene->addItem(pixmapItem1);
             scene->addItem(pixmapItem2);
 
-            // Position the items side by side
-            int padding = 20; // adjust the padding to your liking
+            int padding = 20; 
             pixmapItem1->setPos(0, 0);
             pixmapItem2->setPos(image1.cols + padding, 0);
 
-            // Set the view's scene and fit the view to the scene
             ui.graphicsView->setScene(scene);
             ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
             ui.graphicsView->setRenderHint(QPainter::Antialiasing);
             ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); 
             ui.graphicsView->setMouseTracking(true);
             ui.graphicsView->viewport()->installEventFilter(this);
             QMessageBox::warning(nullptr, "Warning", "There is no page after this one!");
@@ -347,7 +329,7 @@ void CBR::PagePrecedante()
             ui.graphicsView->setRenderHint(QPainter::Antialiasing);
             ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);  
 
             ui.graphicsView->setMouseTracking(true);
 
@@ -368,28 +350,24 @@ void CBR::PagePrecedante()
             QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
             QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
 
-            // Load the second image
             QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
             QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
 
-            // Add both items to the scene
 
             scene->addItem(pixmapItem1);
             scene->addItem(pixmapItem2);
 
-            // Position the items side by side
-            int padding = 20; // adjust the padding to your liking
+            int padding = 20; 
             pixmapItem1->setPos(0, 0);
             pixmapItem2->setPos(image1.cols + padding, 0);
 
 
-            // Set the view's scene and fit the view to the scene
             ui.graphicsView->setScene(scene);
             ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
             ui.graphicsView->setRenderHint(QPainter::Antialiasing);
             ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); 
             ui.graphicsView->setMouseTracking(true);
             ui.graphicsView->viewport()->installEventFilter(this);
         }
@@ -407,7 +385,7 @@ void CBR::PagePrecedante()
             ui.graphicsView->setRenderHint(QPainter::Antialiasing);
             ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
 
             ui.graphicsView->setMouseTracking(true);
 
@@ -424,28 +402,24 @@ void CBR::PagePrecedante()
             QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
             QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
 
-            // Load the second image
             QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
             QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
 
-            // Add both items to the scene
 
             scene->addItem(pixmapItem1);
             scene->addItem(pixmapItem2);
 
-            // Position the items side by side
-            int padding = 20; // adjust the padding to your liking
+            int padding = 20; 
             pixmapItem1->setPos(0, 0);
             pixmapItem2->setPos(image1.cols + padding, 0);
 
 
-            // Set the view's scene and fit the view to the scene
             ui.graphicsView->setScene(scene);
             ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
             ui.graphicsView->setRenderHint(QPainter::Antialiasing);
             ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); 
             ui.graphicsView->setMouseTracking(true);
             ui.graphicsView->viewport()->installEventFilter(this);
             QMessageBox::warning(nullptr, "Warning", "There is no page before this one!");
@@ -459,7 +433,6 @@ void CBR::PagePrecedante()
 
 void CBR::onViewDoubleClicked(QMouseEvent* event)
 {
-    // zoom in on the image
     if (event->button() == Qt::LeftButton)
     {
         ui.graphicsView->scale(1.8,1.8);
@@ -475,7 +448,6 @@ bool CBR::eventFilter(QObject* obj, QEvent* event)
 {
     if (event->type() == QEvent::MouseButtonDblClick)
     {
-        // check if the mouse is over the graphics view
         if (ui.graphicsView->underMouse()) {
             onViewDoubleClicked(dynamic_cast<QMouseEvent*>(event));
             return true;
@@ -488,7 +460,6 @@ void CBR::mousePressEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::RightButton && ui.graphicsView->underMouse())
     {
-        // start dragging
         m_lastMousePos = event->pos();
         m_dragging = true;
     }
@@ -498,7 +469,6 @@ void CBR::mouseMoveEvent(QMouseEvent* event)
 {
     if (m_dragging && ui.graphicsView->underMouse())
     {
-        // calculate the offset and move the view
         QPoint offset = event->pos() - m_lastMousePos;
         ui.graphicsView->setSceneRect(ui.graphicsView->sceneRect().translated(-offset.x(), -offset.y()));
         m_lastMousePos = event->pos();
@@ -510,7 +480,6 @@ void CBR::mouseReleaseEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::RightButton)
     {
-        // stop dragging
         m_dragging = false;
     }
 }
@@ -549,7 +518,7 @@ void CBR::createArchive()
 
         QFileInfo fileInfo(image);
         entry = archive_entry_new();
-        archive_entry_set_pathname(entry, fileInfo.fileName().toStdString().c_str()); // Set only the file name as the path
+        archive_entry_set_pathname(entry, fileInfo.fileName().toStdString().c_str()); 
         archive_entry_set_size(entry, file.size());
         archive_entry_set_filetype(entry, AE_IFREG);
         archive_entry_set_perm(entry, 0644);
@@ -594,7 +563,7 @@ void CBR::loadImageFromZip()
         ui.graphicsView->setRenderHint(QPainter::Antialiasing);
         ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); 
 
         ui.graphicsView->setMouseTracking(true);
 
@@ -613,27 +582,23 @@ void CBR::loadImageFromZip()
         QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
         QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
 
-        // Load the second image
         QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
         QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
 
-        // Add both items to the scene
 
         scene->addItem(pixmapItem1);
         scene->addItem(pixmapItem2);
 
-        // Position the items side by side
-        int padding = 20; // adjust the padding to your liking
+        int padding = 20; 
         pixmapItem1->setPos(0, 0);
         pixmapItem2->setPos(image1.cols + padding, 0);
 
-        // Set the view's scene and fit the view to the scene
         ui.graphicsView->setScene(scene);
         ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
         ui.graphicsView->setRenderHint(QPainter::Antialiasing);
         ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); 
         ui.graphicsView->setMouseTracking(true);
         ui.graphicsView->viewport()->installEventFilter(this);
     }
@@ -650,7 +615,7 @@ int CBR::getNumberFromUser(QWidget* parent)
     }
     else
     {
-        return -1; // ou une autre valeur pour indiquer une erreur ou une annulation de l'utilisateur
+        return -1; 
     }
 }
 
@@ -658,26 +623,21 @@ int CBR::getNumberFromUser(QWidget* parent)
 
 void CBR::SaveImage()
 {
-    // Load the image and its filename from the archive
     cv::Mat image;
-    ArchiveExtraction a(current_archive_path);
+    CommonArchives a(current_archive_path);
     a.LireArchive();
     image = *cache.object(currentPage)->cv_image_ptr;
     std::string originalFilename = a.GetListeFichier()[currentPage];
     QString qstr = QString::fromStdString(originalFilename);
     qDebug() << qstr;
-    // Prompt the user to choose a directory to save the image
     QString directory = QFileDialog::getExistingDirectory(this, tr("Save Image"), "");
 
-    // Check if the user canceled the dialog or didn't choose a directory
     if (directory.isEmpty()) {
         return;
     }
 
-    // Combine the directory and the original filename to create the full file path
     QString filePath = directory + "/" + QString::fromStdString(originalFilename);
 
-    // Save the image to the specified file path
     cv::imwrite(filePath.toStdString(), image);
 }
 
@@ -706,7 +666,7 @@ void CBR::single_view_change()
  ui.graphicsView->setRenderHint(QPainter::Antialiasing);
  ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
- ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+ ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
 
  ui.graphicsView->setMouseTracking(true);
  ui.graphicsView->viewport()->installEventFilter(this);
@@ -732,27 +692,23 @@ void CBR::double_view_change()
         QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
         QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
 
-        // Load the second image
         QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
         QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
 
-        // Add both items to the scene
 
         scene->addItem(pixmapItem1);
         scene->addItem(pixmapItem2);
 
-        // Position the items side by side
-        int padding = 20; // adjust the padding to your liking
+        int padding = 20; 
         pixmapItem1->setPos(0, 0);
         pixmapItem2->setPos(image1.cols + padding, 0);
 
-        // Set the view's scene and fit the view to the scene
         ui.graphicsView->setScene(scene);
         ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
         ui.graphicsView->setRenderHint(QPainter::Antialiasing);
         ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); // enable scroll hand drag
+        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); 
         ui.graphicsView->setMouseTracking(true);
         ui.graphicsView->viewport()->installEventFilter(this);
 

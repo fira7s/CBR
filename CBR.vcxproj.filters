@@ -40,7 +40,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ArchiveExtraction.cpp">
+    <ClCompile Include="CommonArchives.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="archives.cpp">
@@ -51,7 +51,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ArchiveExtraction.h">
+    <ClInclude Include="CommonArchives.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="archives.h">

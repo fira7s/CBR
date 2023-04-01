@@ -1,4 +1,4 @@
-#include "ArchiveExtraction.h"
+#include "CommonArchives.h"
 #include <algorithm>
 #include <archive_entry.h>
 #include <archive.h>
@@ -19,18 +19,18 @@
 #include <algorithm>
 #include<QDebug>
 
-ArchiveExtraction::~ArchiveExtraction()
+CommonArchives::~CommonArchives()
 {}
 
 
-ArchiveExtraction::ArchiveExtraction(ArchiveExtraction& ar1)
+CommonArchives::CommonArchives(CommonArchives& ar1)
 {
     CheminArchive = ar1.GetarchivePath();
     nombreTotalPages = ar1.GetNombreTotalePage();
 }
 
 
-ArchiveExtraction::ArchiveExtraction(std::string path1)
+CommonArchives::CommonArchives(std::string path1)
 {
 
     CheminArchive = path1;
@@ -38,25 +38,11 @@ ArchiveExtraction::ArchiveExtraction(std::string path1)
 }
 
 
-void ArchiveExtraction::SetNombreTotalPages(int nombre)
+void CommonArchives::SetNombreTotalPages(int nombre)
 {
 
     nombreTotalPages = nombre;
 }
-
-static void Echouer(const char* f, const char* m, int r)
-{
-
-}
-
-static int verbose = 0;
-
-static void Notifier(const char* f, const char* m)
-{
-
-}
-static void message(const char* m){}
-
 
 
 
@@ -81,14 +67,17 @@ static int CopierDonnees(struct archive* ar, struct archive* aw)
             return (r);
         r = archive_write_data_block(aw, buff, size, offset);
         if (r != ARCHIVE_OK) {
-            Notifier("archive_write_data_block()",
-                archive_error_string(aw));
+            //Notifier("archive_write_data_block()",
+                archive_error_string(aw);
             return (r);
         }
     }
 }
 
-void ArchiveExtraction::LireArchive()
+
+
+
+void CommonArchives::LireArchive()
 {
     const char* CheminFichier = CheminArchive.c_str();
 
@@ -105,8 +94,8 @@ void ArchiveExtraction::LireArchive()
 
     if (CheminFichier != NULL && strcmp(CheminFichier, "-") == 0)
         CheminFichier = NULL;
-    if ((r = archive_read_open_filename(a, CheminFichier, 10240)))
-        Echouer("archive_read_open_filename()", archive_error_string(a), r);
+    if ((r = archive_read_open_filename(a, CheminFichier, 10240))){}
+        //Echouer("archive_read_open_filename()", archive_error_string(a), r);
 
     while (archive_read_next_header(a, &entry) == ARCHIVE_OK) {
         std::string NomFichier = archive_entry_pathname(entry);
@@ -137,7 +126,7 @@ void ArchiveExtraction::LireArchive()
 
 
 
-void ArchiveExtraction::Extract(const char* filename, int DoExtract, int flags, int numPage, cv::Mat& b)
+void CommonArchives::Extract(const char* filename, int DoExtract, int flags, int numPage, cv::Mat& b)
 {
     //LireArchive();
     struct archive* a;
@@ -158,20 +147,16 @@ void ArchiveExtraction::Extract(const char* filename, int DoExtract, int flags, 
 
     if (filename != NULL && strcmp(filename, "-") == 0)
         filename = NULL;
-    if ((r = archive_read_open_filename(a, filename, 10240)))
-        Echouer("archive_read_open_filename()", archive_error_string(a), r);
+    if ((r = archive_read_open_filename(a, filename, 10240))){}
+        //Echouer("archive_read_open_filename()", archive_error_string(a), r);
 
     for (;;)
     {
         r = archive_read_next_header(a, &entry);
         if (r == ARCHIVE_EOF)
             break;
-        if (r != ARCHIVE_OK)
-            Echouer("archive_read_next_header()", archive_error_string(a), 1);
-        if (verbose && DoExtract)
-            message("x ");
-        if (verbose || !DoExtract)
-            message(archive_entry_pathname(entry));
+        if (r != ARCHIVE_OK){}
+            //Echouer("archive_read_next_header()", archive_error_string(a), 1);
         std::string NomFichier = archive_entry_pathname(entry);
         if (DoExtract)
         {
@@ -184,17 +169,16 @@ void ArchiveExtraction::Extract(const char* filename, int DoExtract, int flags, 
                     b = cv::imdecode(cv::Mat(data), cv::IMREAD_COLOR);
                     qDebug() << "ok2";
                     r = archive_write_data(ext, &data[0], entry_size);
-                    if (r != ARCHIVE_OK)
-                        Echouer("archive_write_data()", archive_error_string(ext), 1);
+                    if (r != ARCHIVE_OK){}
+                        //Echouer("archive_write_data()", archive_error_string(ext), 1);
                     r = archive_write_finish_entry(ext);
-                    if (r != ARCHIVE_OK)
-                        Echouer("archive_write_finish_entry()", archive_error_string(ext), 1);
+                    if (r != ARCHIVE_OK){}
+                        //Echouer("archive_write_finish_entry()", archive_error_string(ext), 1);
                     break;
             }
             counteurNmbrPages += 1;
         }
-        if (verbose || !DoExtract)
-            message("\n");
+
     }
 
     archive_write_free(ext);
@@ -204,7 +188,7 @@ void ArchiveExtraction::Extract(const char* filename, int DoExtract, int flags, 
 
 
 
-void ArchiveExtraction::setPath(std::string path)
+void CommonArchives::setPath(std::string path)
 {
     CheminArchive = path;
 }

@@ -5,7 +5,7 @@
 #include "cache.h"
 #include <opencv2/opencv.hpp>
 #include "cache.h"
-#include "ArchiveExtraction.h"
+#include "CommonArchives.h"
 
 extern bool current_page_changed;
 extern bool current_path_changed;
@@ -14,7 +14,7 @@ extern std::string current_archive_path;
 extern std::mutex preload_mutex;
 extern bool preloaded;
 extern int currentPage;
-extern ArchiveExtraction current_Archive;
+extern CommonArchives current_Archive;
 extern int preload_left_size;
 extern int preload_right_size;
 

@@ -1,5 +1,5 @@
-#ifndef ARCHIVEEXTRACTION_H
-#define ARCHIVEEXTRACTION_H
+#ifndef COMMONARCHIVES_H
+#define COMMONARCHIVES_H
 
 #include "Archives.h"
 #include <stdio.h>
@@ -8,14 +8,14 @@
 #include <opencv2/opencv.hpp>
 
 
-class ArchiveExtraction : public Archives
+class CommonArchives : public Archives
 {
 public:
-    ArchiveExtraction() :Archives() {};
+    CommonArchives() :Archives() {};
 
-    ~ArchiveExtraction();
-    ArchiveExtraction(ArchiveExtraction& ar1);
-    ArchiveExtraction(std::string path1);
+    ~CommonArchives();
+    CommonArchives(CommonArchives& ar1);
+    CommonArchives(std::string path1);
     void SetNombreTotalPages(int nombre);
     void setPath(std::string path);
     void LireArchive();
@@ -24,3 +24,4 @@ public:
 
 
 #endif
+
