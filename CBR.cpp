@@ -36,18 +36,19 @@
 QCache<int, ImageData> cache;
 QReadWriteLock cache_lock;
 ArchiveExtraction current_Archive;
-std::string g_archive_path;
+std::string current_archive_path;
 int currentPage;
 bool single_view=true;
 
+
 // thread 2 params
-bool g_is_page_current_changed=false;
-bool g_is_path_changed=false;
-int g_page_num_total=191;
-std::mutex g_preload_mutex;
+bool current_page_changed=false;
+bool current_path_changed =false;
+int  page_num_total=191;
+std::mutex preload_mutex;
 bool preloaded=true;
-int page_preload_left_size=10;
-int page_preload_right_size=10;
+int preload_left_size=10;
+int preload_right_size=10;
 
 
 CBR::CBR(QWidget *parent)
@@ -68,8 +69,8 @@ CBR::CBR(QWidget *parent)
     menuBar()->addAction(aProposAction);
     connect(aProposAction, &QAction::triggered, this, &CBR::showAboutDialog);
     p = PreLoadWorker();
-    g_archive_path = "data/ex3.zip";
-}
+    current_archive_path = "data/ex3.zip";
+} 
 
 CBR::~CBR()
 {
@@ -80,9 +81,9 @@ CBR::~CBR()
 void CBR::extractArchive()
 {
 
-    current_Archive.setPath(g_archive_path);
+    current_Archive.setPath(current_archive_path);
     current_Archive.LireArchive();
-    g_page_num_total = current_Archive.GetNombreTotalePage();
+    page_num_total = current_Archive.GetNombreTotalePage();
 
 
     QGraphicsScene* scene = new QGraphicsScene();
@@ -90,10 +91,10 @@ void CBR::extractArchive()
     if (single_view) 
     {
         currentPage = 0;
-        g_preload_mutex.lock();
+        preload_mutex.lock();
         p.loadAndCacheImage(currentPage);
         preloaded = false;
-        g_preload_mutex.unlock();
+        preload_mutex.unlock();
         cv::Mat image = *cache.object(currentPage)->cv_image_ptr;
         QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
         QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
@@ -111,11 +112,11 @@ void CBR::extractArchive()
     else
     {
         currentPage = 1;
-        g_preload_mutex.lock();
+        preload_mutex.lock();
         p.loadAndCacheImage(currentPage);
         p.loadAndCacheImage(currentPage-1);
         preloaded = false;
-        g_preload_mutex.unlock();
+        preload_mutex.unlock();
         cv::Mat image1 = *cache.object(currentPage-1)->cv_image_ptr;
         cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
 
@@ -150,7 +151,7 @@ void CBR::extractArchive()
 }
 void CBR::sommaire()
 {
-    ArchiveExtraction a(g_archive_path);
+    ArchiveExtraction a(current_archive_path);
     a.LireArchive();
     std::map<int, std::string> m_fileNames = a.GetListeFichier();
     std::string m_currentFile = m_fileNames[currentPage];
@@ -196,16 +197,16 @@ void CBR::PageSuivante()
     QGraphicsScene* scene = new QGraphicsScene(this);
     ui.graphicsView->setScene(scene);
 
-    if (currentPage < g_page_num_total - 1)
+    if (currentPage < page_num_total - 1)
     {
         if (single_view)
         {
             currentPage+=1;
-            g_is_page_current_changed = true;
-            g_preload_mutex.lock();
+            current_page_changed = true;
+            preload_mutex.lock();
             p.loadAndCacheImage(currentPage);
             preloaded = false;
-            g_preload_mutex.unlock();
+            preload_mutex.unlock();
             cv::Mat image;
             image = *cache.object(currentPage)->cv_image_ptr;
             QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
@@ -224,12 +225,12 @@ void CBR::PageSuivante()
         else
         {
             currentPage+=2;
-            g_is_page_current_changed = true;
-            g_preload_mutex.lock();
+            current_page_changed = true;
+            preload_mutex.lock();
             p.loadAndCacheImage(currentPage);
             p.loadAndCacheImage(currentPage - 1);
             preloaded = false;
-            g_preload_mutex.unlock();
+            preload_mutex.unlock();
             cv::Mat image1 = *cache.object(currentPage - 1)->cv_image_ptr;
             cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
 
@@ -332,11 +333,11 @@ void CBR::PagePrecedante()
         if (single_view)
         {
             currentPage -= 1;
-            g_is_page_current_changed = true;
-            g_preload_mutex.lock();
+            current_page_changed = true;
+            preload_mutex.lock();
             p.loadAndCacheImage(currentPage);
             preloaded = false;
-            g_preload_mutex.unlock();
+            preload_mutex.unlock();
             cv::Mat image;
             image = *cache.object(currentPage)->cv_image_ptr;
             QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
@@ -355,12 +356,12 @@ void CBR::PagePrecedante()
         else
         {
             currentPage -= 2;
-            g_is_page_current_changed = true;
-            g_preload_mutex.lock();
+            current_page_changed = true;
+            preload_mutex.lock();
             p.loadAndCacheImage(currentPage);
             p.loadAndCacheImage(currentPage - 1);
             preloaded = false;
-            g_preload_mutex.unlock();
+            preload_mutex.unlock();
             cv::Mat image1 = *cache.object(currentPage - 1)->cv_image_ptr;
             cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
 
@@ -581,10 +582,10 @@ void CBR::loadImageFromZip()
     ui.graphicsView->setScene(scene);
     if (single_view)
     {
-        g_preload_mutex.lock();
+        preload_mutex.lock();
         p.loadAndCacheImage(currentPage);
         preloaded = false;
-        g_preload_mutex.unlock();
+        preload_mutex.unlock();
         cv::Mat image = *cache.object(currentPage)->cv_image_ptr;
         QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
         QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
@@ -601,11 +602,11 @@ void CBR::loadImageFromZip()
     }
     else
     {
-        g_preload_mutex.lock();
+        preload_mutex.lock();
         p.loadAndCacheImage(currentPage);
         p.loadAndCacheImage(currentPage - 1);
         preloaded = false;
-        g_preload_mutex.unlock();
+        preload_mutex.unlock();
         cv::Mat image1 = *cache.object(currentPage - 1)->cv_image_ptr;
         cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
 
@@ -659,7 +660,7 @@ void CBR::SaveImage()
 {
     // Load the image and its filename from the archive
     cv::Mat image;
-    ArchiveExtraction a(g_archive_path);
+    ArchiveExtraction a(current_archive_path);
     a.LireArchive();
     image = *cache.object(currentPage)->cv_image_ptr;
     std::string originalFilename = a.GetListeFichier()[currentPage];
@@ -693,10 +694,10 @@ void CBR::single_view_change()
  single_view = true;
  QGraphicsScene* scene = new QGraphicsScene(this);
  ui.graphicsView->setScene(scene);
- g_preload_mutex.lock();
+ preload_mutex.lock();
  p.loadAndCacheImage(currentPage);
  preloaded = false;
- g_preload_mutex.unlock();
+ preload_mutex.unlock();
  cv::Mat image = *cache.object(currentPage)->cv_image_ptr;
  QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
  QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
@@ -720,11 +721,11 @@ void CBR::double_view_change()
     QGraphicsScene* scene = new QGraphicsScene(this);
     ui.graphicsView->setScene(scene);
 
-        g_preload_mutex.lock();
+        preload_mutex.lock();
         p.loadAndCacheImage(currentPage);
         p.loadAndCacheImage(currentPage - 1);
         preloaded = false;
-        g_preload_mutex.unlock();
+        preload_mutex.unlock();
         cv::Mat image1 = *cache.object(currentPage - 1)->cv_image_ptr;
         cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
 

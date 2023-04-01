@@ -46,9 +46,6 @@
     <ClCompile Include="archives.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="currentView.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="preloadworker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -58,9 +55,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="archives.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="currentView.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cache.h">

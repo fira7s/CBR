@@ -2,7 +2,6 @@
 
 #include <QtWidgets/QMainWindow>
 #include "ui_CBR.h"
-#include "currentView.h"
 #include <QMouseEvent>
 #include <QGraphicsView>
 #include <QPoint>
@@ -43,7 +42,6 @@ private:
     QPoint m_lastMousePos;
     bool m_dragging;
 public:
-    currentView v;
     PreLoadWorker p;
 
 };

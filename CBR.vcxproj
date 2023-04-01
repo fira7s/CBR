@@ -116,14 +116,12 @@
     <ClCompile Include="ArchiveExtraction.cpp" />
     <ClCompile Include="archives.cpp" />
     <ClCompile Include="CBR.cpp" />
-    <ClCompile Include="currentView.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArchiveExtraction.h" />
     <ClInclude Include="archives.h" />
     <ClInclude Include="cache.h" />
-    <ClInclude Include="currentView.h" />
     <ClInclude Include="preloadworker.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
