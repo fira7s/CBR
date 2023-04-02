@@ -37,7 +37,7 @@ QCache<int, ImageData> cache;
 QReadWriteLock cache_lock;
 CommonArchives current_Archive;
 std::string current_archive_path;
-int currentPage;
+int currentPage=0;
 bool single_view=true;
 
 
@@ -47,24 +47,72 @@ bool current_path_changed =false;
 int  page_num_total=191;
 std::mutex preload_mutex;
 bool preloaded=true;
-int preload_left_size=10;
-int preload_right_size=10;
+int preload_left_size=3;
+int preload_right_size=3;
 
 
 CBR::CBR(QWidget *parent)
     : QMainWindow(parent)
 {
     ui.setupUi(this);
+    QFont font("Segoe UI", 10);
+    QSize iconSize(32, 32);
+
     connect(ui.extractButton, &QPushButton::clicked, this, &CBR::extractArchive);
+
+    ui.extractButton->setFont(font);
+    QIcon icon1("assets/load.png");
+    ui.extractButton->setIconSize(iconSize);
+    ui.extractButton->setIcon(icon1.pixmap(iconSize));
+
+
     connect(ui.suivantButton, &QPushButton::clicked, this, &CBR::PageSuivante);
-    connect(ui.precedantButton, &QPushButton::clicked, this, &CBR::PagePrecedante);
-    connect(ui.createButton, &QPushButton::clicked, this, &CBR::createArchive);
-    connect(ui.SommaireButton, &QPushButton::clicked, this, &CBR::sommaire);
-    connect(ui.SelectButton, &QPushButton::clicked, this, &CBR::loadImageFromZip);
-    connect(ui.SaveButton, &QPushButton::clicked, this, &CBR::SaveImage);
+    ui.suivantButton->setFont(font);
+    QIcon icon2("assets/next.png");
+    ui.suivantButton->setIconSize(iconSize);
+    ui.suivantButton->setIcon(icon2.pixmap(iconSize));
+
+    connect(ui.precedantButton, &QPushButton::clicked, this, &CBR::PagePrecedante);    
+    ui.precedantButton->setFont(font);
+    QIcon icon3("assets/back.png");
+    ui.precedantButton->setIconSize(iconSize);
+    ui.precedantButton->setIcon(icon3.pixmap(iconSize));
+
+
+
+    connect(ui.createButton, &QPushButton::clicked, this, &CBR::createArchive);   
+    ui.createButton->setFont(font);
+    QIcon icon4("assets/create.png");
+    ui.createButton->setIconSize(iconSize);
+    ui.createButton->setIcon(icon4.pixmap(iconSize));
+
+
+    connect(ui.SommaireButton, &QPushButton::clicked, this, &CBR::sommaire);  
+    ui.SommaireButton->setFont(font);
+    QIcon icon5("assets/sommaire.png");
+    ui.SommaireButton->setIconSize(iconSize);
+    ui.SommaireButton->setIcon(icon5.pixmap(iconSize));
+
+
+    connect(ui.SelectButton, &QPushButton::clicked, this, &CBR::loadImageFromZip);   
+    ui.SelectButton->setFont(font);
+    QIcon icon6("assets/select.png");
+    ui.SelectButton->setIconSize(iconSize);
+    ui.SelectButton->setIcon(icon6.pixmap(iconSize));
+
+
+    connect(ui.SaveButton, &QPushButton::clicked, this, &CBR::SaveImage);    
+    ui.SaveButton->setFont(font);
+    QIcon icon7("assets/save.png");
+    ui.SaveButton->setIconSize(iconSize);
+    ui.SaveButton->setIcon(icon7.pixmap(iconSize));
+
+    ui.label->setFont(font);
     connect(ui.radioButton, &QRadioButton::clicked, this, &CBR::single_view_change);
     ui.radioButton->setChecked(true);
     connect(ui.radioButton_2, &QRadioButton::clicked, this, &CBR::double_view_change);
+    ui.radioButton->setFont(font);
+    ui.radioButton_2->setFont(font);
     QAction* aProposAction = new QAction(tr("A propos"), this);
     menuBar()->addAction(aProposAction);
     connect(aProposAction, &QAction::triggered, this, &CBR::showAboutDialog);
@@ -182,7 +230,7 @@ void CBR::sommaire()
     
 void CBR::PageSuivante()
 {
-
+    // bug +2 a corriger
 
     QGraphicsScene* scene = new QGraphicsScene(this);
     ui.graphicsView->setScene(scene);
@@ -650,7 +698,7 @@ void CBR::showAboutDialog()
 
 void CBR::single_view_change()
 {
- if (single_view == false) { currentPage -= 1;}
+ if (single_view == false and currentPage!=0) { currentPage -= 1;}
  single_view = true;
  QGraphicsScene* scene = new QGraphicsScene(this);
  ui.graphicsView->setScene(scene);
@@ -676,7 +724,7 @@ void CBR::single_view_change()
 
 void CBR::double_view_change()
 {
-    if (single_view = true) { currentPage += 1; }
+    if (single_view = true and currentPage!= page_num_total) { currentPage += 1; }
     single_view = false;
     QGraphicsScene* scene = new QGraphicsScene(this);
     ui.graphicsView->setScene(scene);

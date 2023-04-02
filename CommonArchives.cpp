@@ -45,38 +45,6 @@ void CommonArchives::SetNombreTotalPages(int nombre)
 }
 
 
-
-
-
-static int CopierDonnees(struct archive* ar, struct archive* aw)
-{
-    int r;
-    const void* buff;
-    size_t size;
-#if ARCHIVE_VERSION_NUMBER >= 3000000
-    int64_t offset;
-#else
-    off_t offset;
-#endif
-
-    for (;;) {
-        r = archive_read_data_block(ar, &buff, &size, &offset);
-        if (r == ARCHIVE_EOF)
-            return (ARCHIVE_OK);
-        if (r != ARCHIVE_OK)
-            return (r);
-        r = archive_write_data_block(aw, buff, size, offset);
-        if (r != ARCHIVE_OK) {
-            //Notifier("archive_write_data_block()",
-                archive_error_string(aw);
-            return (r);
-        }
-    }
-}
-
-
-
-
 void CommonArchives::LireArchive()
 {
     const char* CheminFichier = CheminArchive.c_str();

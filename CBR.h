@@ -27,10 +27,8 @@ public:
     void showAboutDialog();
     void single_view_change();
     void double_view_change();
-private slots:
     void onViewDoubleClicked(QMouseEvent* event);
     void loadImageFromZip();
-protected:
     bool eventFilter(QObject* obj, QEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
