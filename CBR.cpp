@@ -30,6 +30,8 @@
 #include<QInputDialog>
 #include<QMessageBox>
 #include "cache.h"
+#include <chrono>
+#include <thread>
 
 
 //global params
@@ -39,6 +41,7 @@ CommonArchives current_Archive;
 std::string current_archive_path;
 int currentPage=0;
 bool single_view=true;
+std::chrono::steady_clock::time_point lastCallTime;
 
 
 // thread 2 params
@@ -47,8 +50,8 @@ bool current_path_changed =false;
 int  page_num_total=191;
 std::mutex preload_mutex;
 bool preloaded=true;
-int preload_left_size=3;
-int preload_right_size=3;
+int preload_left_size=7;
+int preload_right_size=2;
 
 
 CBR::CBR(QWidget *parent)
@@ -139,10 +142,7 @@ void CBR::extractArchive()
     if (single_view) 
     {
         currentPage = 0;
-        preload_mutex.lock();
         p.loadAndCacheImage(currentPage);
-        preloaded = false;
-        preload_mutex.unlock();
         cv::Mat image = *cache.object(currentPage)->cv_image_ptr;
         QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
         QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
@@ -156,15 +156,15 @@ void CBR::extractArchive()
         ui.graphicsView->setMouseTracking(true);
 
         ui.graphicsView->viewport()->installEventFilter(this);
+        preload_mutex.lock();
+        preloaded = false;
+        preload_mutex.unlock();
     }
     else
     {
         currentPage = 1;
-        preload_mutex.lock();
         p.loadAndCacheImage(currentPage);
         p.loadAndCacheImage(currentPage-1);
-        preloaded = false;
-        preload_mutex.unlock();
         cv::Mat image1 = *cache.object(currentPage-1)->cv_image_ptr;
         cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
 
@@ -189,6 +189,9 @@ void CBR::extractArchive()
         ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); 
         ui.graphicsView->setMouseTracking(true);
         ui.graphicsView->viewport()->installEventFilter(this);
+        preload_mutex.lock();
+        preloaded = false;
+        preload_mutex.unlock();
     }
 
 }
@@ -227,24 +230,30 @@ void CBR::sommaire()
 }
 
 
-    
+
 void CBR::PageSuivante()
 {
-    // bug +2 a corriger
+    std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 
+    // Calculate the time elapsed since the last call
+    std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastCallTime);
+
+    // If the elapsed time is less than 500 milliseconds, do nothing and return
+    if (elapsed.count() < 350) {
+        return;
+    }
+
+    // Update the last call time
+    lastCallTime = now;
     QGraphicsScene* scene = new QGraphicsScene(this);
     ui.graphicsView->setScene(scene);
-
     if (currentPage < page_num_total - 1)
     {
         if (single_view)
         {
-            currentPage+=1;
             current_page_changed = true;
-            preload_mutex.lock();
+            currentPage += 1;
             p.loadAndCacheImage(currentPage);
-            preloaded = false;
-            preload_mutex.unlock();
             cv::Mat image;
             image = *cache.object(currentPage)->cv_image_ptr;
             QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
@@ -254,21 +263,23 @@ void CBR::PageSuivante()
             ui.graphicsView->setRenderHint(QPainter::Antialiasing);
             ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); 
+            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
 
             ui.graphicsView->setMouseTracking(true);
 
             ui.graphicsView->viewport()->installEventFilter(this);
+            preload_mutex.lock();
+            current_page_changed = false;
+            preloaded = false;
+            preload_mutex.unlock();
+
         }
         else
         {
             currentPage+=2;
             current_page_changed = true;
-            preload_mutex.lock();
             p.loadAndCacheImage(currentPage);
             p.loadAndCacheImage(currentPage - 1);
-            preloaded = false;
-            preload_mutex.unlock();
             cv::Mat image1 = *cache.object(currentPage - 1)->cv_image_ptr;
             cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
 
@@ -295,6 +306,9 @@ void CBR::PageSuivante()
             ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
             ui.graphicsView->setMouseTracking(true);
             ui.graphicsView->viewport()->installEventFilter(this);
+            preload_mutex.lock();
+            preloaded = false;
+            preload_mutex.unlock();
         }
     }
     else
@@ -354,7 +368,18 @@ void CBR::PageSuivante()
 
 void CBR::PagePrecedante()
 {
+    std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 
+    // Calculate the time elapsed since the last call
+    std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastCallTime);
+
+    // If the elapsed time is less than 500 milliseconds, do nothing and return
+    if (elapsed.count() < 350) {
+        return;
+    }
+
+    // Update the last call time
+    lastCallTime = now;
     QGraphicsScene* scene = new QGraphicsScene(this);
     ui.graphicsView->setScene(scene);
 
@@ -364,10 +389,7 @@ void CBR::PagePrecedante()
         {
             currentPage -= 1;
             current_page_changed = true;
-            preload_mutex.lock();
             p.loadAndCacheImage(currentPage);
-            preloaded = false;
-            preload_mutex.unlock();
             cv::Mat image;
             image = *cache.object(currentPage)->cv_image_ptr;
             QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
@@ -382,16 +404,16 @@ void CBR::PagePrecedante()
             ui.graphicsView->setMouseTracking(true);
 
             ui.graphicsView->viewport()->installEventFilter(this);
+            preload_mutex.lock();
+            preloaded = false;
+            preload_mutex.unlock();
         }
         else
         {
             currentPage -= 2;
             current_page_changed = true;
-            preload_mutex.lock();
             p.loadAndCacheImage(currentPage);
             p.loadAndCacheImage(currentPage - 1);
-            preloaded = false;
-            preload_mutex.unlock();
             cv::Mat image1 = *cache.object(currentPage - 1)->cv_image_ptr;
             cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
 
@@ -418,6 +440,9 @@ void CBR::PagePrecedante()
             ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); 
             ui.graphicsView->setMouseTracking(true);
             ui.graphicsView->viewport()->installEventFilter(this);
+            preload_mutex.lock();
+            preloaded = false;
+            preload_mutex.unlock();
         }
 
     }
@@ -594,15 +619,13 @@ void CBR::loadImageFromZip()
     mainWidget.setWindowTitle("Select Page");
     int page_number = getNumberFromUser(&mainWidget);
     currentPage = page_number;
+    current_page_changed = true;
 
     QGraphicsScene* scene = new QGraphicsScene(this);
     ui.graphicsView->setScene(scene);
     if (single_view)
     {
-        preload_mutex.lock();
         p.loadAndCacheImage(currentPage);
-        preloaded = false;
-        preload_mutex.unlock();
         cv::Mat image = *cache.object(currentPage)->cv_image_ptr;
         QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
         QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
@@ -616,14 +639,14 @@ void CBR::loadImageFromZip()
         ui.graphicsView->setMouseTracking(true);
 
         ui.graphicsView->viewport()->installEventFilter(this);
+        preload_mutex.lock();
+        preloaded = false;
+        preload_mutex.unlock();
     }
     else
     {
-        preload_mutex.lock();
         p.loadAndCacheImage(currentPage);
         p.loadAndCacheImage(currentPage - 1);
-        preloaded = false;
-        preload_mutex.unlock();
         cv::Mat image1 = *cache.object(currentPage - 1)->cv_image_ptr;
         cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
 
@@ -649,6 +672,9 @@ void CBR::loadImageFromZip()
         ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); 
         ui.graphicsView->setMouseTracking(true);
         ui.graphicsView->viewport()->installEventFilter(this);
+        preload_mutex.lock();
+        preloaded = false;
+        preload_mutex.unlock();
     }
 
 }
@@ -700,6 +726,7 @@ void CBR::single_view_change()
 {
  if (single_view == false and currentPage!=0) { currentPage -= 1;}
  single_view = true;
+ current_page_changed = true;
  QGraphicsScene* scene = new QGraphicsScene(this);
  ui.graphicsView->setScene(scene);
  preload_mutex.lock();
@@ -718,7 +745,9 @@ void CBR::single_view_change()
 
  ui.graphicsView->setMouseTracking(true);
  ui.graphicsView->viewport()->installEventFilter(this);
- 
+ preload_mutex.lock();
+ preloaded = false;
+ preload_mutex.unlock();
 
 }
 
@@ -726,6 +755,7 @@ void CBR::double_view_change()
 {
     if (single_view = true and currentPage!= page_num_total) { currentPage += 1; }
     single_view = false;
+    current_page_changed = true;
     QGraphicsScene* scene = new QGraphicsScene(this);
     ui.graphicsView->setScene(scene);
 
@@ -759,5 +789,7 @@ void CBR::double_view_change()
         ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); 
         ui.graphicsView->setMouseTracking(true);
         ui.graphicsView->viewport()->installEventFilter(this);
-
+        preload_mutex.lock();
+        preloaded = false;
+        preload_mutex.unlock();
 }

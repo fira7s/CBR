@@ -41,8 +41,8 @@ void PreLoadWorker::loadAndCacheImage(const int page_num) {
 void PreLoadWorker::parallelLoadPage() {
 
     while (1) {
+        preload_mutex.lock();
         if (preloaded==false) {     
-            preload_mutex.lock();
             if (current_path_changed == true) {
                 current_path_changed = false;
             }
@@ -50,28 +50,28 @@ void PreLoadWorker::parallelLoadPage() {
             bool right_exceed = false;
             int page_num_current = currentPage;
             for (int i = 1; i <= qMax<int>(preload_left_size, preload_right_size); i++) {
-
-
                 if (page_num_current + i <= page_num_total && i <= preload_right_size) {
                     loadAndCacheImage(page_num_current + i);
+                    qDebug() << "in1";
                 }
                 else right_exceed = true;
 
                 if (page_num_current - i >= 1 && i <= preload_left_size) {
                     loadAndCacheImage(page_num_current - i);
+                    qDebug() << "in2";
                 }
                 else left_exceed = true;
 
                 if (left_exceed == true && right_exceed == true) break;
                 if (current_page_changed == true || current_path_changed == true) {
-                    if (current_page_changed == true) current_page_changed = false;
+                    if (current_page_changed == true) { current_page_changed = false;}
+                    qDebug() << "out";
                     break;
 
                 }
             }
-            preloaded = true;
-            preload_mutex.unlock();
         }
-
+        preloaded = true;
+        preload_mutex.unlock();
     }
 }
