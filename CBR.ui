@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Load</string>
+     <string>Charger</string>
     </property>
    </widget>
    <widget class="QGraphicsView" name="graphicsView">
@@ -73,7 +73,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Create</string>
+     <string>Créer </string>
     </property>
    </widget>
    <widget class="QLabel" name="label">

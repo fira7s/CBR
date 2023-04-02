@@ -43,9 +43,6 @@ void PreLoadWorker::parallelLoadPage() {
     while (1) {
         preload_mutex.lock();
         if (preloaded==false) {     
-            if (current_path_changed == true) {
-                current_path_changed = false;
-            }
             bool left_exceed = false;
             bool right_exceed = false;
             int page_num_current = currentPage;
@@ -65,6 +62,7 @@ void PreLoadWorker::parallelLoadPage() {
                 if (left_exceed == true && right_exceed == true) break;
                 if (current_page_changed == true || current_path_changed == true) {
                     if (current_page_changed == true) { current_page_changed = false;}
+                    if (current_path_changed == true) {current_path_changed = false;}
                     qDebug() << "out";
                     break;
 

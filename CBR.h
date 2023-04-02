@@ -28,7 +28,7 @@ public:
     void single_view_change();
     void double_view_change();
     void onViewDoubleClicked(QMouseEvent* event);
-    void loadImageFromZip();
+    void select_page();
     bool eventFilter(QObject* obj, QEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
