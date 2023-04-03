@@ -131,7 +131,7 @@ CBR::~CBR()
 
 void CBR::extractArchive()
 {
-    QString selected_file = QFileDialog::getOpenFileName(nullptr, "Select archive", "", "Archive files (*.zip *.7z *.cbr *.rar)");
+    QString selected_file = QFileDialog::getOpenFileName(nullptr, "Select archive", "", "Archive files (*.zip *.7z *.cbr *.rar *.cbz)");
 
     if (!selected_file.isEmpty() and current_archive_path!= selected_file.toStdString()) {
          current_archive_path = selected_file.toStdString();
@@ -604,7 +604,7 @@ void CBR::createArchive()
     archive_write_set_format_zip(a);
     archive_write_open_file(a, file.fileName().toStdString().c_str());
 
-    QStringList images = QFileDialog::getOpenFileNames(this, "Select images to archive", QDir::homePath(), "Images (*.jpg *.jpeg *.png *.gif)");
+    QStringList images = QFileDialog::getOpenFileNames(this, "Selectionez les images a ajouter", QDir::homePath(), "Images (*.jpg *.jpeg *.png *.bmp)");
     for (const auto& image : images) {
         QFile file(image);
         if (!file.open(QIODevice::ReadOnly)) {
@@ -644,7 +644,7 @@ void CBR::createArchive()
         return;
     }
 
-    QMessageBox::information(this, "Archive created", "The archive was successfully created.");
+    QMessageBox::information(this, "Archive created", "L'archive a ete creee avec succes.");
 }
 
 
