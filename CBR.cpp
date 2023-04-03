@@ -577,7 +577,7 @@ void CBR::mouseReleaseEvent(QMouseEvent* event)
 
 void CBR::createArchive()
 {
-    QString archiveName = QFileDialog::getSaveFileName(this, "Save archive", QDir::homePath(), "ZIP files (*.zip)");
+    QString archiveName = QFileDialog::getSaveFileName(this, "Save archive", QDir::homePath(), "Comic Book Archive files (*.cbr)");
 
     if (archiveName.isEmpty()) {
         return;
@@ -608,7 +608,7 @@ void CBR::createArchive()
 
         QFileInfo fileInfo(image);
         entry = archive_entry_new();
-        archive_entry_set_pathname(entry, fileInfo.fileName().toStdString().c_str()); 
+        archive_entry_set_pathname(entry, fileInfo.fileName().toStdString().c_str());
         archive_entry_set_size(entry, file.size());
         archive_entry_set_filetype(entry, AE_IFREG);
         archive_entry_set_perm(entry, 0644);
@@ -626,8 +626,24 @@ void CBR::createArchive()
     archive_write_close(a);
     archive_write_free(a);
 
+    QFile archiveFile(archiveName);
+    if (archiveFile.open(QIODevice::ReadWrite)) {
+        QByteArray cbrHeader = "Comic Book Archive\r\n";
+        archiveFile.seek(0);
+        archiveFile.write(cbrHeader);
+        archiveFile.close();
+    }
+    else {
+        QMessageBox::critical(this, "Error", "Cannot add CBR header");
+        return;
+    }
+
     QMessageBox::information(this, "Archive created", "The archive was successfully created.");
 }
+
+
+
+
 
 
 void CBR::select_page()
@@ -742,9 +758,11 @@ void CBR::SaveImage()
         QString filePath = directory + "/" + QString::fromStdString(originalFilename);
 
         cv::imwrite(filePath.toStdString(), image);
+        QMessageBox::information(this, "Page enregistree", "La page a ete enregistre avec succes.");
+
     }
     if(currentPage >= 0 and !single_view){ QMessageBox::warning(nullptr, "Warning", "L'enregistrement n'est possible que dans le mode 1 page"); }
-    else {
+    else if (currentPage<0){
         QMessageBox::warning(nullptr, "Warning", "Veuillez charger un archive avant!");
 
     }
