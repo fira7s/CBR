@@ -137,6 +137,7 @@ void CBR::extractArchive()
          current_archive_path = selected_file.toStdString();
          cache.clear();
     }
+    else if (selected_file.isEmpty()) { return; }
     current_Archive.setPath(current_archive_path);
     current_Archive.LireArchive();
     if (current_Archive.GetNombreTotalePage() == 0 and !selected_file.isEmpty())
