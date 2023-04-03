@@ -131,7 +131,7 @@ CBR::~CBR()
 
 void CBR::extractArchive()
 {
-    QString selected_file = QFileDialog::getOpenFileName(nullptr, "Select archive", "", "ZIP files (*.zip)");
+    QString selected_file = QFileDialog::getOpenFileName(nullptr, "Select archive", "", "Archive files (*.zip *.7z *.cbr)");
 
     if (!selected_file.isEmpty() and current_archive_path!= selected_file.toStdString()) {
          current_archive_path = selected_file.toStdString();
@@ -640,11 +640,9 @@ void CBR::select_page()
         if (page_number >= 1 and page_number<=page_num_total) {
             current_page_changed = true;
             currentPage = page_number-1; }
-        else {
+        else if(page_number == 0 || page_number > page_num_total){
             QMessageBox::warning(nullptr, "Warning", "Veuillez verfier votre saisie ! Regardez le sommaire pour en savoir plus");
-
         }
-
         QGraphicsScene* scene = new QGraphicsScene(this);
         ui.graphicsView->setScene(scene);
         if (single_view)
