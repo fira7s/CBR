@@ -27,6 +27,7 @@ public:
     PreLoadWorker();
     void loadAndCacheImage(const int page_num);
     void parallelLoadPage();
+
 };
 
 

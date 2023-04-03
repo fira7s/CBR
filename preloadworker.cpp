@@ -16,7 +16,7 @@ PreLoadWorker::PreLoadWorker() {
 
 void PreLoadWorker::loadAndCacheImage(const int page_num) {
 
-    //qDebug() << "Cache size: " << cache.size();
+    qDebug() << "Cache size: " << cache.size();
     ImageData* image_data_ptr;
     cache_lock.lockForRead();
     if (cache.contains(page_num)) {

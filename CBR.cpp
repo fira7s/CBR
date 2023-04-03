@@ -42,7 +42,8 @@ std::string current_archive_path;
 int currentPage=-1;
 bool single_view=true;
 std::chrono::steady_clock::time_point lastCallTime;
-
+bool done_load=false;
+int r = 0;
 
 // thread 2 params
 bool current_page_changed=false;
@@ -50,8 +51,8 @@ bool current_path_changed =false;
 int  page_num_total;
 std::mutex preload_mutex;
 bool preloaded=true;
-int preload_left_size=7;
-int preload_right_size=7;
+int preload_left_size=10;
+int preload_right_size=10;
 
 
 CBR::CBR(QWidget *parent)
@@ -120,6 +121,9 @@ CBR::CBR(QWidget *parent)
     menuBar()->addAction(aProposAction);
     connect(aProposAction, &QAction::triggered, this, &CBR::showAboutDialog);
     p = PreLoadWorker();
+    QTimer* timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &CBR::checkVariable);
+    timer->start(5);
 } 
 
 CBR::~CBR()
@@ -127,6 +131,74 @@ CBR::~CBR()
 
 }
 
+void CBR::checkVariable() {
+    if (done_load == true) {
+        display();
+    }
+}
+void CBR::loadasync()
+{
+    p.loadAndCacheImage(currentPage); 
+    if(!single_view){ p.loadAndCacheImage(currentPage-1); }
+    done_load = true;
+    qDebug() << "ruuning";
+}
+
+void CBR::display()
+{
+    r = 0;
+    done_load = false;
+    QGraphicsScene* scene = new QGraphicsScene();
+    ui.graphicsView->setScene(scene);
+    if (single_view)
+    {
+        cv::Mat image = *cache.object(currentPage)->cv_image_ptr;
+        QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
+        QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
+        scene->addItem(pixmapItem);
+        ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
+        ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+        ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+
+        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
+
+        ui.graphicsView->setMouseTracking(true);
+
+        ui.graphicsView->viewport()->installEventFilter(this);
+    }
+    else {
+        cv::Mat image1 = *cache.object(currentPage - 1)->cv_image_ptr;
+        cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
+
+        QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
+        QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
+
+        QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
+        QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
+
+
+        scene->addItem(pixmapItem1);
+        scene->addItem(pixmapItem2);
+
+        int padding = 20;
+        pixmapItem1->setPos(0, 0);
+        pixmapItem2->setPos(image1.cols + padding, 0);
+
+
+        ui.graphicsView->setScene(scene);
+        ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
+        ui.graphicsView->setRenderHint(QPainter::Antialiasing);
+        ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
+
+        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
+        ui.graphicsView->setMouseTracking(true);
+        ui.graphicsView->viewport()->installEventFilter(this);
+    }
+    preload_mutex.lock();
+    current_page_changed = false;
+    preloaded = false;
+    preload_mutex.unlock();
+}
 
 void CBR::extractArchive()
 {
@@ -134,6 +206,7 @@ void CBR::extractArchive()
 
     if (!selected_file.isEmpty() and current_archive_path!= selected_file.toStdString()) {
          current_archive_path = selected_file.toStdString();
+         current_page_changed = true;
          cache.clear();
     }
     else if (selected_file.isEmpty()) { return; }
@@ -145,255 +218,91 @@ void CBR::extractArchive()
         return;
     }
     page_num_total = current_Archive.GetNombreTotalePage();
-    QGraphicsScene* scene = new QGraphicsScene();
-    ui.graphicsView->setScene(scene);
-    if (single_view) 
-    {
-        currentPage = 0;
-        p.loadAndCacheImage(currentPage);
-        cv::Mat image = *cache.object(currentPage)->cv_image_ptr;
-        QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
-        QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
-        scene->addItem(pixmapItem);
-        ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
-        ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-        ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
 
-        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); 
-
-        ui.graphicsView->setMouseTracking(true);
-
-        ui.graphicsView->viewport()->installEventFilter(this);
-        preload_mutex.lock();
-        preloaded = false;
-        preload_mutex.unlock();
-    }
-    else
-    {
-        currentPage = 1;
-        p.loadAndCacheImage(currentPage);
-        p.loadAndCacheImage(currentPage-1);
-        cv::Mat image1 = *cache.object(currentPage-1)->cv_image_ptr;
-        cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
-
-        QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
-        QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
-        QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
-        QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
-
-
-        scene->addItem(pixmapItem1);
-        scene->addItem(pixmapItem2);
-
-        int padding = 20; 
-        pixmapItem1->setPos(0, 0);
-        pixmapItem2->setPos(image1.cols + padding, 0);
-
-        ui.graphicsView->setScene(scene);
-        ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
-        ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-        ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
-
-        ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag); 
-        ui.graphicsView->setMouseTracking(true);
-        ui.graphicsView->viewport()->installEventFilter(this);
-        preload_mutex.lock();
-        preloaded = false;
-        preload_mutex.unlock();
-    }
+    currentPage = 0;
+    std::thread load(&CBR::loadasync, this);
+    load.detach();
+    r = 1;
 
 }
-void CBR::sommaire()
+
+
+
+
+void CBR::launch_load()
 {
-    if(currentPage>=0)
-    { QDialog dialog(this);
-    dialog.setWindowTitle(tr("Sommaire"));
-    dialog.setMinimumSize(400, 400);
-
-    QListWidget* listWidget = new QListWidget(&dialog);
-    listWidget->setSelectionMode(QAbstractItemView::SingleSelection);
-    listWidget->setSpacing(10);
-
-    for (int i = 0; i < page_num_total; i++) {
-        QListWidgetItem* item = new QListWidgetItem(QString("Page ") + QString::number(i + 1));
-        item->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
-        if (i == currentPage) {
-            item = new QListWidgetItem(QString::fromStdString("<<< Page ") + QString::number(i + 1) + QString(" >>>"));
-            item->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
-            item->setForeground(Qt::red);
-            item->setFont(QFont("", 15, QFont::Bold));
-        }
-        listWidget->addItem(item);
-    }
-
-    QVBoxLayout* layout = new QVBoxLayout(&dialog);
-    layout->addWidget(listWidget);
-    dialog.setLayout(layout);
-
-    dialog.exec();
+    current_page_changed = true;
+    std::thread load(&CBR::loadasync, this);
+    load.detach();
+    r = 1;
 }
-    else {
-        QMessageBox::warning(nullptr, "Warning", "Veuillez charger un archive avant!");
-
-    }
-}
-
 
 
 void CBR::PageSuivante()
 {
-    std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-
-    std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastCallTime);
-    if (elapsed.count() < 350) {
+    single_view = false;
+    qDebug() << "r="<<r;
+    if (r==1)
+    {
+        qDebug() << "out";
         return;
     }
-
-    lastCallTime = now;
     if (currentPage >= 0)
-    {  
-    QGraphicsScene* scene = new QGraphicsScene(this);
-    ui.graphicsView->setScene(scene);
-    if (currentPage < page_num_total - 1)
     {
-        if (single_view)
+        if (currentPage < page_num_total - 1)
         {
-            current_page_changed = true;
-            currentPage += 1;
-            p.loadAndCacheImage(currentPage);
-            cv::Mat image;
-            image = *cache.object(currentPage)->cv_image_ptr;
-            QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
-            QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
-            scene->addItem(pixmapItem);
-            ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
-            ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-            ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
-
-            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
-
-            ui.graphicsView->setMouseTracking(true);
-
-            ui.graphicsView->viewport()->installEventFilter(this);
-            preload_mutex.lock();
-            current_page_changed = false;
-            preloaded = false;
-            preload_mutex.unlock();
-
+            if (single_view)
+            {
+                currentPage += 1;
+                launch_load();
+            }
+            else
+            {
+                currentPage += 2;
+                launch_load();
+            }
         }
         else
         {
-            currentPage += 2;
-            current_page_changed = true;
-            p.loadAndCacheImage(currentPage);
-            p.loadAndCacheImage(currentPage - 1);
-            cv::Mat image1 = *cache.object(currentPage - 1)->cv_image_ptr;
-            cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
+            if (single_view)
+            {
+                display();
+                QMessageBox::warning(nullptr, "Warning", "Il n'y a pas de page apres celle-ci !");
 
-            QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
-            QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
+            }
+            else
+            {
+                display();
+                QMessageBox::warning(nullptr, "Warning", "Il n'y a pas de page apres celle-ci !");
 
-            QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
-            QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
-
-
-            scene->addItem(pixmapItem1);
-            scene->addItem(pixmapItem2);
-
-            int padding = 20;
-            pixmapItem1->setPos(0, 0);
-            pixmapItem2->setPos(image1.cols + padding, 0);
-
-
-            ui.graphicsView->setScene(scene);
-            ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
-            ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-            ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
-
-            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
-            ui.graphicsView->setMouseTracking(true);
-            ui.graphicsView->viewport()->installEventFilter(this);
-            preload_mutex.lock();
-            current_page_changed = false;
-            preloaded = false;
-            preload_mutex.unlock();
+            }
         }
     }
-    else
-    {
-        if (single_view)
-        {
-            cv::Mat image = *cache.object(currentPage)->cv_image_ptr;
-            QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
-            QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
-            scene->addItem(pixmapItem);
-            ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
-            ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-            ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
-
-            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
-
-            ui.graphicsView->setMouseTracking(true);
-
-            ui.graphicsView->viewport()->installEventFilter(this);
-            QMessageBox::warning(nullptr, "Warning", "Il n'y a pas de page apres celle-ci !");
-
-        }
-        else
-        {
-
-            cv::Mat image1 = *cache.object(currentPage - 1)->cv_image_ptr;
-            cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
-
-            QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
-            QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
-
-            QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
-            QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
-
-
-            scene->addItem(pixmapItem1);
-            scene->addItem(pixmapItem2);
-
-            int padding = 20;
-            pixmapItem1->setPos(0, 0);
-            pixmapItem2->setPos(image1.cols + padding, 0);
-
-            ui.graphicsView->setScene(scene);
-            ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
-            ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-            ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
-
-            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
-            ui.graphicsView->setMouseTracking(true);
-            ui.graphicsView->viewport()->installEventFilter(this);
-            QMessageBox::warning(nullptr, "Warning", "Il n'y a pas de page apres celle-ci !");
-
-        }
-    }
-}
-      else {
-          QMessageBox::warning(nullptr, "Warning", "Veuillez charger un archive avant!");
+    else {
+        QMessageBox::warning(nullptr, "Warning", "Veuillez charger un archive avant!");
 
     }
+
+
+
+
+
+
 }
 
 
 void CBR::PagePrecedante()
 {
-    std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-
-    std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastCallTime);
-
-    if (elapsed.count() < 350) {
+    qDebug() << "r=" << r;
+    if (r == 1)
+    {
+        qDebug() << "out";
         return;
     }
 
-    lastCallTime = now;
     if (currentPage >= 0)
     {
-        QGraphicsScene* scene = new QGraphicsScene(this);
-        ui.graphicsView->setScene(scene);
+        
         int test = currentPage;
         if (single_view)
         {
@@ -405,64 +314,13 @@ void CBR::PagePrecedante()
             if (single_view)
             {
                 currentPage -= 1;
-                current_page_changed = true;
-                p.loadAndCacheImage(currentPage);
-                cv::Mat image;
-                image = *cache.object(currentPage)->cv_image_ptr;
-                QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
-                QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
-                scene->addItem(pixmapItem);
-                ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
-                ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-                ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
-
-                ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
-
-                ui.graphicsView->setMouseTracking(true);
-
-                ui.graphicsView->viewport()->installEventFilter(this);
-                preload_mutex.lock();
-                current_page_changed = false;
-                preloaded = false;
-                preload_mutex.unlock();
+                launch_load();
             }
             else
             {
                 currentPage -= 2;
-                if (currentPage ==0) { currentPage = 1; }
-                current_page_changed = true;
-                p.loadAndCacheImage(currentPage);
-                p.loadAndCacheImage(currentPage - 1);
-                cv::Mat image1 = *cache.object(currentPage - 1)->cv_image_ptr;
-                cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
-
-                QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
-                QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
-
-                QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
-                QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
-
-
-                scene->addItem(pixmapItem1);
-                scene->addItem(pixmapItem2);
-
-                int padding = 20;
-                pixmapItem1->setPos(0, 0);
-                pixmapItem2->setPos(image1.cols + padding, 0);
-
-
-                ui.graphicsView->setScene(scene);
-                ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
-                ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-                ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
-
-                ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
-                ui.graphicsView->setMouseTracking(true);
-                ui.graphicsView->viewport()->installEventFilter(this);
-                preload_mutex.lock();
-                current_page_changed = false;
-                preloaded = false;
-                preload_mutex.unlock();
+                if (currentPage == 0) { currentPage = 1; }
+                launch_load();
             }
 
         }
@@ -470,51 +328,14 @@ void CBR::PagePrecedante()
         {
             if (single_view)
             {
-                cv::Mat image = *cache.object(currentPage)->cv_image_ptr;
-                QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
-                QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
-                scene->addItem(pixmapItem);
-                ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
-                ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-                ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
-
-                ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
-
-                ui.graphicsView->setMouseTracking(true);
-
-                ui.graphicsView->viewport()->installEventFilter(this);
+                display();
                 QMessageBox::warning(nullptr, "Warning", "Il n'y a pas de page avant celle-ci !");
 
             }
             else
             {
 
-                cv::Mat image1 = *cache.object(currentPage - 1)->cv_image_ptr;
-                cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
-
-                QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
-                QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
-
-                QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
-                QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
-
-
-                scene->addItem(pixmapItem1);
-                scene->addItem(pixmapItem2);
-
-                int padding = 20;
-                pixmapItem1->setPos(0, 0);
-                pixmapItem2->setPos(image1.cols + padding, 0);
-
-
-                ui.graphicsView->setScene(scene);
-                ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
-                ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-                ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
-
-                ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
-                ui.graphicsView->setMouseTracking(true);
-                ui.graphicsView->viewport()->installEventFilter(this);
+                display();
                 QMessageBox::warning(nullptr, "Warning", "Il n'y a pas de page avant celle-ci !");
 
             }
@@ -527,6 +348,43 @@ void CBR::PagePrecedante()
     }
 
 
+}
+
+
+void CBR::sommaire()
+{
+    if (currentPage >= 0)
+    {
+        QDialog dialog(this);
+        dialog.setWindowTitle(tr("Sommaire"));
+        dialog.setMinimumSize(400, 400);
+
+        QListWidget* listWidget = new QListWidget(&dialog);
+        listWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+        listWidget->setSpacing(10);
+
+        for (int i = 0; i < page_num_total; i++) {
+            QListWidgetItem* item = new QListWidgetItem(QString("Page ") + QString::number(i + 1));
+            item->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+            if (i == currentPage) {
+                item = new QListWidgetItem(QString::fromStdString("<<< Page ") + QString::number(i + 1) + QString(" >>>"));
+                item->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+                item->setForeground(Qt::red);
+                item->setFont(QFont("", 15, QFont::Bold));
+            }
+            listWidget->addItem(item);
+        }
+
+        QVBoxLayout* layout = new QVBoxLayout(&dialog);
+        layout->addWidget(listWidget);
+        dialog.setLayout(layout);
+
+        dialog.exec();
+    }
+    else {
+        QMessageBox::warning(nullptr, "Warning", "Veuillez charger un archive avant!");
+
+    }
 }
 
 void CBR::onViewDoubleClicked(QMouseEvent* event)
@@ -671,57 +529,14 @@ void CBR::select_page()
         ui.graphicsView->setScene(scene);
         if (single_view)
         {
-            p.loadAndCacheImage(currentPage);
-            cv::Mat image = *cache.object(currentPage)->cv_image_ptr;
-            QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_BGR888);
-            QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(qimage));
-            scene->addItem(pixmapItem);
-            ui.graphicsView->fitInView(pixmapItem, Qt::KeepAspectRatio);
-            ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-            ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
-
-            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
-
-            ui.graphicsView->setMouseTracking(true);
-
-            ui.graphicsView->viewport()->installEventFilter(this);
+            launch_load();
 
         }
         else
         {
             if (currentPage == 0) { currentPage += 1; }
-            p.loadAndCacheImage(currentPage);
-            p.loadAndCacheImage(currentPage - 1);
-            cv::Mat image1 = *cache.object(currentPage - 1)->cv_image_ptr;
-            cv::Mat image2 = *cache.object(currentPage)->cv_image_ptr;
-
-            QImage qimage1(image1.data, image1.cols, image1.rows, image1.step, QImage::Format_BGR888);
-            QGraphicsPixmapItem* pixmapItem1 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage1));
-
-            QImage qimage2(image2.data, image2.cols, image2.rows, image2.step, QImage::Format_BGR888);
-            QGraphicsPixmapItem* pixmapItem2 = new QGraphicsPixmapItem(QPixmap::fromImage(qimage2));
-
-
-            scene->addItem(pixmapItem1);
-            scene->addItem(pixmapItem2);
-
-            int padding = 20;
-            pixmapItem1->setPos(0, 0);
-            pixmapItem2->setPos(image1.cols + padding, 0);
-
-            ui.graphicsView->setScene(scene);
-            ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
-            ui.graphicsView->setRenderHint(QPainter::Antialiasing);
-            ui.graphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
-
-            ui.graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
-            ui.graphicsView->setMouseTracking(true);
-            ui.graphicsView->viewport()->installEventFilter(this);
-
+            launch_load();
         }
-        preload_mutex.lock();
-        preloaded = false;
-        preload_mutex.unlock();
     }
     else {
         QMessageBox::warning(nullptr, "Warning", "Veuillez charger un archive avant!");
