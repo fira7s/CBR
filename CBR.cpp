@@ -120,7 +120,6 @@ CBR::CBR(QWidget *parent)
     menuBar()->addAction(aProposAction);
     connect(aProposAction, &QAction::triggered, this, &CBR::showAboutDialog);
     p = PreLoadWorker();
-    current_archive_path = "data/ex3.zip";
 } 
 
 CBR::~CBR()
