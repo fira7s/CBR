@@ -65,7 +65,6 @@ void CommonArchives::LireArchive()
     if (CheminFichier != NULL && strcmp(CheminFichier, "-") == 0)
         CheminFichier = NULL;
     if ((r = archive_read_open_filename(a, CheminFichier, 10240))){}
-        //Echouer("archive_read_open_filename()", archive_error_string(a), r);
 
     while (archive_read_next_header(a, &entry) == ARCHIVE_OK) {
         std::string NomFichier = archive_entry_pathname(entry);
@@ -108,7 +107,6 @@ void CommonArchives::Extract(const char* filename, int DoExtract, int flags, int
 
     a = archive_read_new();
 
-    // Create a memory-based archive object
     ext = archive_write_new();
     archive_write_set_format_ustar(ext);
 
@@ -118,7 +116,6 @@ void CommonArchives::Extract(const char* filename, int DoExtract, int flags, int
     if (filename != NULL && strcmp(filename, "-") == 0)
         filename = NULL;
     if ((r = archive_read_open_filename(a, filename, 10240))){}
-        //Echouer("archive_read_open_filename()", archive_error_string(a), r);
 
     for (;;)
     {
@@ -126,7 +123,6 @@ void CommonArchives::Extract(const char* filename, int DoExtract, int flags, int
         if (r == ARCHIVE_EOF)
             break;
         if (r != ARCHIVE_OK){}
-            //Echouer("archive_read_next_header()", archive_error_string(a), 1);
         std::string NomFichier = archive_entry_pathname(entry);
         if (DoExtract)
         {
@@ -137,13 +133,10 @@ void CommonArchives::Extract(const char* filename, int DoExtract, int flags, int
                     std::vector<char> data(entry_size);
                     archive_read_data(a, &data[0], entry_size);
                     b = cv::imdecode(cv::Mat(data), cv::IMREAD_COLOR);
-                    qDebug() << "ok2";
                     r = archive_write_data(ext, &data[0], entry_size);
                     if (r != ARCHIVE_OK){}
-                        //Echouer("archive_write_data()", archive_error_string(ext), 1);
                     r = archive_write_finish_entry(ext);
                     if (r != ARCHIVE_OK){}
-                        //Echouer("archive_write_finish_entry()", archive_error_string(ext), 1);
                     break;
             }
             counteurNmbrPages += 1;
