@@ -315,6 +315,7 @@ void CBR::PageSuivante()
             ui.graphicsView->setMouseTracking(true);
             ui.graphicsView->viewport()->installEventFilter(this);
             preload_mutex.lock();
+            current_page_changed = false;
             preloaded = false;
             preload_mutex.unlock();
         }
@@ -422,6 +423,7 @@ void CBR::PagePrecedante()
 
                 ui.graphicsView->viewport()->installEventFilter(this);
                 preload_mutex.lock();
+                current_page_changed = false;
                 preloaded = false;
                 preload_mutex.unlock();
             }
@@ -459,6 +461,7 @@ void CBR::PagePrecedante()
                 ui.graphicsView->setMouseTracking(true);
                 ui.graphicsView->viewport()->installEventFilter(this);
                 preload_mutex.lock();
+                current_page_changed = false;
                 preloaded = false;
                 preload_mutex.unlock();
             }
@@ -807,6 +810,7 @@ void CBR::single_view_change()
         ui.graphicsView->setMouseTracking(true);
         ui.graphicsView->viewport()->installEventFilter(this);
         preload_mutex.lock();
+        current_page_changed = false;
         preloaded = false;
         preload_mutex.unlock();
     }
@@ -854,6 +858,7 @@ void CBR::double_view_change()
         ui.graphicsView->setMouseTracking(true);
         ui.graphicsView->viewport()->installEventFilter(this);
         preload_mutex.lock();
+        current_page_changed = false;
         preloaded = false;
         preload_mutex.unlock();
 }
