@@ -131,7 +131,7 @@ CBR::~CBR()
 
 void CBR::extractArchive()
 {
-    QString selected_file = QFileDialog::getOpenFileName(nullptr, "Select archive", "", "Archive files (*.zip *.7z *.cbr)");
+    QString selected_file = QFileDialog::getOpenFileName(nullptr, "Select archive", "", "Archive files (*.zip *.7z *.cbr *.rar)");
 
     if (!selected_file.isEmpty() and current_archive_path!= selected_file.toStdString()) {
          current_archive_path = selected_file.toStdString();
@@ -139,6 +139,11 @@ void CBR::extractArchive()
     }
     current_Archive.setPath(current_archive_path);
     current_Archive.LireArchive();
+    if (current_Archive.GetNombreTotalePage() == 0 and !selected_file.isEmpty())
+    {
+        QMessageBox::warning(nullptr, "Warning", "Archive vide ou ne contient pas d'images!");
+        return;
+    }
     page_num_total = current_Archive.GetNombreTotalePage();
     QGraphicsScene* scene = new QGraphicsScene();
     ui.graphicsView->setScene(scene);

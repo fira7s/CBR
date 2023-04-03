@@ -20,7 +20,9 @@
 #include<QDebug>
 
 CommonArchives::~CommonArchives()
-{}
+{
+    nombreTotalPages = 0;
+}
 
 
 CommonArchives::CommonArchives(CommonArchives& ar1)
