@@ -58,12 +58,7 @@ void PreLoadWorker::parallelLoadPage() {
                 else left_exceed = true;
 
                 if (left_exceed == true && right_exceed == true) break;
-                if (current_page_changed == true || current_path_changed == true) {
-                    if (current_page_changed == true) { current_page_changed = false;}
-                    if (current_path_changed == true) {current_path_changed = false;}
-                    break;
-
-                }
+                if (current_page_changed) {break;}            
             }
         }
         preloaded = true;

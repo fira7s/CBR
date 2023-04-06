@@ -8,7 +8,6 @@
 #include "CommonArchives.h"
 
 extern bool current_page_changed;
-extern bool current_path_changed;
 extern int page_num_total;
 extern std::string current_archive_path;
 extern std::mutex preload_mutex;

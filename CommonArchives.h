@@ -7,6 +7,7 @@
 #include <vector>
 #include <opencv2/opencv.hpp>
 
+extern bool current_page_changed;
 
 class CommonArchives : public Archives
 {

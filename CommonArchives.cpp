@@ -128,6 +128,7 @@ void CommonArchives::Extract(const char* filename, int DoExtract, int flags, int
         {
             //qDebug() << ("------nom-------"+NomFichier).c_str();
             //qDebug() << ("-----liste-----"+ListeFichier[numPage]).c_str();
+            //if (current_page_changed) { break; }
             if (NomFichier == ListeFichier[numPage]) {
                     size_t entry_size = archive_entry_size(entry);
                     std::vector<char> data(entry_size);
